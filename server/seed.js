@@ -1,0 +1,94 @@
+const pool = require('./db');
+const bcrypt = require('bcryptjs');
+
+async function seed() {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    await client.query(`
+      CREATE OR REPLACE FUNCTION update_updated_at()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        NEW.updated_at = NOW();
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    await client.query(`DROP TRIGGER IF EXISTS users_updated_at ON users`);
+    await client.query(`CREATE TRIGGER users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS patients (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        age INTEGER NOT NULL CHECK (age > 0 AND age < 100),
+        gender VARCHAR(10) NOT NULL CHECK (gender IN ('Male', 'Female')),
+        mobile_number VARCHAR(20) UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_patients_mobile ON patients(mobile_number)`);
+    await client.query(`DROP TRIGGER IF EXISTS patients_updated_at ON patients`);
+    await client.query(`CREATE TRIGGER patients_updated_at BEFORE UPDATE ON patients FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS patient_diseases (
+        id SERIAL PRIMARY KEY,
+        patient_id INTEGER REFERENCES patients(id) ON DELETE CASCADE,
+        disease VARCHAR(50) NOT NULL,
+        fees NUMERIC(10,2) NOT NULL CHECK (fees > 0),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(patient_id, disease)
+      );
+    `);
+    await client.query(`DROP TRIGGER IF EXISTS patient_diseases_updated_at ON patient_diseases`);
+    await client.query(`CREATE TRIGGER patient_diseases_updated_at BEFORE UPDATE ON patient_diseases FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS disease_checklists (
+        id SERIAL PRIMARY KEY,
+        patient_disease_id INTEGER REFERENCES patient_diseases(id) ON DELETE CASCADE UNIQUE,
+        blood_pressure BOOLEAN DEFAULT FALSE,
+        weight BOOLEAN DEFAULT FALSE,
+        scan BOOLEAN DEFAULT FALSE,
+        medication BOOLEAN DEFAULT FALSE,
+        doctor_notes TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    await client.query(`DROP TRIGGER IF EXISTS disease_checklists_updated_at ON disease_checklists`);
+    await client.query(`CREATE TRIGGER disease_checklists_updated_at BEFORE UPDATE ON disease_checklists FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
+
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    await client.query(
+      `INSERT INTO users (username, password) VALUES ('admin', $1) ON CONFLICT (username) DO NOTHING`,
+      [hashedPassword]
+    );
+
+    await client.query('COMMIT');
+    console.log('Seed completed successfully!');
+    console.log('Login: admin / admin123');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Seed failed:', err.message);
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+seed();
