@@ -88,11 +88,11 @@ Edit `server/db.js` with your PostgreSQL credentials:
 
 ```js
 const pool = new Pool({
-  user: 'usama',
-  password: 'root',
-  host: 'localhost',
-  port: 5432,
-  database: 'hospital_management'
+  user: '****',
+  password: '****',
+  host: '*****',
+  port: ****,
+  database: '******'
 });
 ```
 
@@ -120,8 +120,8 @@ Open `http://localhost:3000` in your browser.
 
 ### Login Credentials
 
-- **Username:** admin
-- **Password:** admin123
+- **Username:** ****
+- **Password:** *****
 
 ## Features
 
