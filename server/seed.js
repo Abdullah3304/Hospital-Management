@@ -73,6 +73,25 @@ async function seed() {
     await client.query(`DROP TRIGGER IF EXISTS disease_checklists_updated_at ON disease_checklists`);
     await client.query(`CREATE TRIGGER disease_checklists_updated_at BEFORE UPDATE ON disease_checklists FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
 
+    // Per-disease management assessment. JSONB columns allow each disease
+    // to define its own sections/options on the frontend without schema migrations.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS treatment_assessments (
+        id SERIAL PRIMARY KEY,
+        patient_disease_id INTEGER REFERENCES patient_diseases(id) ON DELETE CASCADE UNIQUE,
+        history JSONB NOT NULL DEFAULT '{}'::jsonb,
+        investigation JSONB NOT NULL DEFAULT '{}'::jsonb,
+        treatment_plan JSONB NOT NULL DEFAULT '{}'::jsonb,
+        submitted BOOLEAN NOT NULL DEFAULT FALSE,
+        submitted_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_treatment_assessments_disease ON treatment_assessments(patient_disease_id)`);
+    await client.query(`DROP TRIGGER IF EXISTS treatment_assessments_updated_at ON treatment_assessments`);
+    await client.query(`CREATE TRIGGER treatment_assessments_updated_at BEFORE UPDATE ON treatment_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
+
     const hashedPassword = await bcrypt.hash('admin123', 10);
     await client.query(
       `INSERT INTO users (username, password) VALUES ('admin', $1) ON CONFLICT (username) DO NOTHING`,

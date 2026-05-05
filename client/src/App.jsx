@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import PatientListing from './pages/PatientListing';
 import PatientForm from './pages/PatientForm';
 import PatientDiseases from './pages/PatientDiseases';
+import DiseaseManagement from './pages/DiseaseManagement';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/patients/:id/edit" element={<PrivateRoute><PatientForm key="edit" /></PrivateRoute>} />
           <Route path="/patients/:id/add-disease" element={<PrivateRoute><PatientForm key="add-disease" addDisease /></PrivateRoute>} />
           <Route path="/patients/:id/diseases" element={<PrivateRoute><PatientDiseases /></PrivateRoute>} />
+          <Route path="/patients/:id/diseases/:diseaseId/management" element={<PrivateRoute><DiseaseManagement /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/patients" />} />
         </Routes>
       </BrowserRouter>
