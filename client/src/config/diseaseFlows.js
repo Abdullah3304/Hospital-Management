@@ -148,8 +148,35 @@ export const Obesity = {
   ],
 };
 
+// Diabetes shares the entire Obesity flow, but its History page has one
+// extra section appended after MEDICATION (per clinical requirements).
+// Pages 2 & 3 are reused as-is; data is persisted under the patient's
+// own treatment_assessments row, keyed by patient_disease_id, so there
+// is no collision with Obesity assessments.
+export const Diabetes = {
+  ...Obesity,
+  history: [
+    ...Obesity.history,
+    {
+      type: 'checkbox',
+      key: 'diabetes_specific_investigation',
+      title: 'SPECIFIC PRE-OPERATIVE INVESTIGATION REQUIRED FOR METABOLIC (DIABETES TYPE II) PATIENTS',
+      options: [
+        { key: 'hba1c', label: 'HbA1C' },
+        { key: 'fasting_c_peptide', label: 'Fasting serum C - peptide Level' },
+        { key: 'c_peptide_2hr', label: 'Serum C - peptide level after 2 hour meal' },
+        { key: 'fasting_insulin', label: 'Fasting serum Insulin Level' },
+        { key: 'gad_65_autoantibodies', label: 'GAD 65 Autoantibodies' },
+        { key: 'rft', label: 'RFT' },
+        { key: 'urine_ce', label: 'Urine C/E' },
+      ],
+    },
+  ],
+};
+
 const DISEASE_FLOWS = {
   Obesity,
+  Diabetes,
 };
 
 export function getDiseaseFlow(disease) {

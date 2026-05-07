@@ -25,9 +25,10 @@ body {
 }
 
 .header-logo {
-  height: 48px;
+  height: 56px;
+  width: auto;
   cursor: pointer;
-  border-radius: 50%;
+  object-fit: contain;
 }
 
 .main-content {
@@ -155,8 +156,9 @@ tr.clickable:hover { background: #f5f8ff; }
 }
 
 .login-logo {
-  height: 80px;
-  border-radius: 50%;
+  height: 140px;
+  width: auto;
+  object-fit: contain;
   margin-bottom: 1rem;
 }
 
