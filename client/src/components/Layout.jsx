@@ -14,7 +14,7 @@ export default function Layout({ children }) {
     <div className="layout">
       <header className="header">
         <Link to="/patients">
-          <img src="/logo.png" alt="ALCOS" className="header-logo" />
+          <img src="/logo.png" alt="ALCODS" className="header-logo" />
         </Link>
         <button onClick={handleLogout} className="btn btn-danger">Logout</button>
       </header>

@@ -58,7 +58,7 @@ export default function PatientListing() {
                 <td>
                   <button
                     onClick={e => { e.stopPropagation(); navigate(`/patients/${p.id}/diseases`); }}
-                    className="btn btn-secondary btn-sm"
+                    className="btn btn-primary btn-sm"
                   >
                     Treatment Status
                   </button>

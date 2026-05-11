@@ -25,7 +25,7 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <img src="/logo.png" alt="ALCOS" className="login-logo" />
+        <img src="/logo.png" alt="ALCODS" className="login-logo" />
         <h2>Hospital Management System</h2>
         <form onSubmit={handleSubmit}>
           {error && <div className="error-msg">{error}</div>}

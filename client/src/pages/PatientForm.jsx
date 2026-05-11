@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 
-const DISEASES = ['Sugar', 'Foot Machine', 'Lipo'];
+const DISEASES = ['Diabetes', 'Diabetic Foot', 'Lipo', 'Obesity'];
 
 export default function PatientForm({ addDisease }) {
   const { id } = useParams();

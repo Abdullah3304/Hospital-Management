@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 
 const CHECKLIST_CONFIG = {
   'Sugar': ['blood_pressure', 'weight', 'scan', 'medication'],
-  'Foot Machine': ['blood_pressure', 'weight', 'scan', 'medication'],
+  'Diabetic Foot': ['blood_pressure', 'weight', 'scan', 'medication'],
   'Lipo': ['blood_pressure', 'weight', 'scan', 'medication'],
+  'Obesity': ['blood_pressure', 'weight', 'scan', 'medication'],
+  'Diabetes': ['blood_pressure', 'weight', 'scan', 'medication'],
 };
 
 const CHECKLIST_LABELS = {
@@ -17,6 +19,7 @@ const CHECKLIST_LABELS = {
 
 export default function PatientDiseases() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [diseases, setDiseases] = useState([]);
   const [selected, setSelected] = useState(null);
   const [checklist, setChecklist] = useState({});
@@ -68,18 +71,35 @@ export default function PatientDiseases() {
               <th>Disease</th>
               <th>Fees</th>
               <th>Added On</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {diseases.map(d => (
-              <tr key={d.id} onClick={() => openChecklist(d)} className="clickable">
+              <tr key={d.id}>
                 <td>{d.disease}</td>
                 <td>{d.fees}</td>
                 <td>{new Date(d.created_at).toLocaleDateString()}</td>
+                <td>
+                  <div className="action-buttons">
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => openChecklist(d)}
+                    >
+                      Basic Checklist
+                    </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => navigate(`/patients/${id}/diseases/${d.id}/management`)}
+                    >
+                      {d.assessment_submitted ? 'View / Edit Management' : 'Start Management'}
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
             {!diseases.length && (
-              <tr><td colSpan="3" className="no-data">No diseases found</td></tr>
+              <tr><td colSpan="4" className="no-data">No diseases found</td></tr>
             )}
           </tbody>
         </table>
@@ -89,7 +109,7 @@ export default function PatientDiseases() {
         <div className="modal-overlay" onClick={() => setSelected(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Checklist &mdash; {selected.disease}</h3>
+              <h3>Basic Checklist &mdash; {selected.disease}</h3>
               <button onClick={() => setSelected(null)} className="modal-close">&times;</button>
             </div>
             <div className="modal-body">

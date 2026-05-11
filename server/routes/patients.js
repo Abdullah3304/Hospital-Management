@@ -127,10 +127,13 @@ router.put('/:id', async (req, res) => {
 
 router.get('/:id/diseases', async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT * FROM patient_diseases WHERE patient_id = $1 ORDER BY created_at DESC',
-      [req.params.id]
-    );
+    const { rows } = await pool.query(`
+      SELECT pd.*, COALESCE(ta.submitted, FALSE) AS assessment_submitted
+      FROM patient_diseases pd
+      LEFT JOIN treatment_assessments ta ON ta.patient_disease_id = pd.id
+      WHERE pd.patient_id = $1
+      ORDER BY pd.created_at DESC
+    `, [req.params.id]);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -173,6 +176,39 @@ router.put('/diseases/:diseaseId/checklist', async (req, res) => {
         blood_pressure=$2, weight=$3, scan=$4, medication=$5, doctor_notes=$6
       RETURNING *
     `, [req.params.diseaseId, blood_pressure || false, weight || false, scan || false, medication || false, doctor_notes || '']);
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Disease management assessment (multi-step wizard). Stores history,
+// pre-operative investigation, and treatment plan as JSONB, so each
+// disease can define its own sections/options on the frontend.
+router.get('/diseases/:diseaseId/assessment', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM treatment_assessments WHERE patient_disease_id = $1',
+      [req.params.diseaseId]
+    );
+    res.json(rows[0] || null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/diseases/:diseaseId/assessment', async (req, res) => {
+  const { history = {}, investigation = {}, treatment_plan = {} } = req.body;
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO treatment_assessments (patient_disease_id, history, investigation, treatment_plan, submitted, submitted_at)
+      VALUES ($1, $2, $3, $4, TRUE, NOW())
+      ON CONFLICT (patient_disease_id) DO UPDATE SET
+        history=$2, investigation=$3, treatment_plan=$4,
+        submitted=TRUE,
+        submitted_at=COALESCE(treatment_assessments.submitted_at, NOW())
+      RETURNING *
+    `, [req.params.diseaseId, history, investigation, treatment_plan]);
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
