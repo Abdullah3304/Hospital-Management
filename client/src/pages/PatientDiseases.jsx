@@ -3,11 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 
 const CHECKLIST_CONFIG = {
-  'Sugar': ['blood_pressure', 'weight', 'scan', 'medication'],
   'Diabetic Foot': ['blood_pressure', 'weight', 'scan', 'medication'],
-  'Lipo': ['blood_pressure', 'weight', 'scan', 'medication'],
+  'Laproscopic': ['blood_pressure', 'weight', 'scan', 'medication'],
   'Obesity': ['blood_pressure', 'weight', 'scan', 'medication'],
   'Diabetes': ['blood_pressure', 'weight', 'scan', 'medication'],
+  'Neuropathic Pain': ['blood_pressure', 'weight', 'scan', 'medication'],
+  'Stem Cell Therapy': ['blood_pressure', 'weight', 'scan', 'medication'],
+  'Erectile Dysfunction': ['blood_pressure', 'weight', 'scan', 'medication'],
 };
 
 const CHECKLIST_LABELS = {
