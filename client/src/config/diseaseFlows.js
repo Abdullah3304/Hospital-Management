@@ -174,9 +174,89 @@ export const Diabetes = {
   ],
 };
 
+export const ErectileDysfunction = {
+  steps: ['history', 'investigation'],
+  pageTitle: {
+    history: 'HISTORY',
+    investigation: 'PHYSICAL EXAMINATION',
+  },
+  history: [
+    { type: 'select', key: 'morning_erection', label: 'Morning Erection', options: ['Yes', 'No'] },
+    { type: 'select', key: 'libido', label: 'Libido', options: ['High', 'Low'] },
+    {
+      type: 'checkbox',
+      key: 'hypogonadism',
+      title: '',
+      options: [{ key: 'hypogonadism', label: 'Hypogonadism' }],
+    },
+    {
+      type: 'checkbox',
+      key: 'ejaculatory_function',
+      title: 'EJACULATORY FUNCTION',
+      options: [{ key: 'ejaculatory_function', label: 'Ejaculatory Function' }],
+    },
+    {
+      type: 'checkbox',
+      key: 'comorbidities',
+      title: 'COMORBIDITIES',
+      options: [
+        { key: 'dm_duration', label: 'DM Duration' },
+        { key: 'htn', label: 'HTN' },
+        { key: 'cvd', label: 'CVD' },
+      ],
+    },
+    {
+      type: 'checkbox',
+      key: 'drugs',
+      title: 'DRUGS',
+      options: [
+        { key: 'ssris', label: 'SSRIs' },
+        { key: 'beta_blockers', label: 'Beta-blockers' },
+        { key: 'thiazides', label: 'Thiazides' },
+        { key: 'smoking', label: 'Smoking' },
+        { key: 'alcohol', label: 'Alcohol' },
+      ],
+    },
+    {
+      type: 'select',
+      key: 'onset_type',
+      label: 'Onset Type',
+      options: ['Organic Etiology', 'Psychogenic Etiology'],
+    },
+  ],
+  investigation: [
+    { type: 'text', key: 'bmi', label: 'BMI' },
+    { type: 'text', key: 'waist_circumference', label: 'Waist Circumference Obesity' },
+    { type: 'text', key: 'bp', label: 'BP' },
+    {
+      type: 'checkbox',
+      key: 'vascular_risk_genital_exam',
+      title: 'VASCULAR RISK GENITAL EXAM',
+      options: [
+        { key: 'peyronies_testicular_atrophy', label: "Peyronie's Testicular Atrophy" },
+        { key: 'secondary_sexual_characteristics', label: 'Secondary Sexual Characteristics' },
+        { key: 'neuropathy_signs', label: 'Neuropathy Signs' },
+      ],
+    },
+    {
+      type: 'checkbox',
+      key: 'essential_labs',
+      title: 'ESSENTIAL LABS',
+      options: [
+        { key: 'fasting_hba1c', label: 'Fasting/HbA1c' },
+        { key: 'lipid_profile', label: 'Lipid Profile' },
+        { key: 'serum_creatinine', label: 'Serum Creatinine' },
+        { key: 'morning_testosterone', label: 'Morning Testosterone' },
+        { key: 'lh_fsh_prolactin', label: 'LH/FSH/Prolactin' },
+      ],
+    },
+  ],
+};
+
 const DISEASE_FLOWS = {
   Obesity,
   Diabetes,
+  'Erectile Dysfunction': ErectileDysfunction,
 };
 
 export function getDiseaseFlow(disease) {

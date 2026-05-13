@@ -109,10 +109,11 @@ export default function DiseaseManagement() {
     return null;
   }
 
-  const stepKey = STEPS[step];
+  const activeSteps = flow.steps || STEPS;
+  const stepKey = activeSteps[step];
   const sections = flow[stepKey];
   const title = flow.pageTitle?.[stepKey] || stepKey.toUpperCase();
-  const isLast = step === STEPS.length - 1;
+  const isLast = step === activeSteps.length - 1;
   const [stepData, setStepData] = stateBag[stepKey];
 
   return (
@@ -132,7 +133,7 @@ export default function DiseaseManagement() {
       </h1>
 
       <div className="step-indicator">
-        {STEPS.map((s, i) => (
+        {activeSteps.map((s, i) => (
           <div key={s} className={`step-dot ${i === step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
             <span>{i + 1}</span>
           </div>
@@ -195,6 +196,20 @@ function Section({ section, value, onChange }) {
             </label>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (section.type === 'text') {
+    return (
+      <div className="management-section">
+        <h3 className="section-title">{section.label}</h3>
+        <input
+          type="text"
+          value={value || ''}
+          onChange={e => onChange(e.target.value)}
+          placeholder={`Enter ${section.label.toLowerCase()}...`}
+        />
       </div>
     );
   }
