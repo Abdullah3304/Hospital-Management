@@ -444,3 +444,185 @@ textarea {
   letter-spacing: 0.05em;
   vertical-align: middle;
 }
+
+.management-print-sheet {
+  display: none;
+}
+
+@media print {
+  .layout > .header {
+    display: none !important;
+  }
+
+  .management-screen-only {
+    display: none !important;
+  }
+
+  .management-print-sheet {
+    display: block !important;
+    font-family: inherit;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.35;
+  }
+
+  .main-content {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  .management-print-root {
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  .print-sheet-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .print-sheet-brand {
+    flex: 0 0 auto;
+    max-width: 45%;
+  }
+
+  .print-sheet-logo-alcods {
+    max-height: 56px;
+    width: auto;
+    display: block;
+  }
+
+  .print-sheet-doctor-slot {
+    flex: 1;
+    min-height: 64px;
+    max-width: 45%;
+    margin-left: auto;
+    border: 1px dashed #999;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+  }
+
+  .print-sheet-doctor-slot-label {
+    font-size: 9pt;
+    color: #666;
+    font-style: italic;
+  }
+
+  .print-sheet-section {
+    margin-bottom: 0.85rem;
+  }
+
+  .print-sheet-section-spaced {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #ddd;
+  }
+
+  .print-sheet-heading {
+    font-size: 11pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.4rem;
+    color: #000;
+  }
+
+  .print-sheet-subheading {
+    font-size: 10pt;
+    font-weight: 700;
+    margin: 0.5rem 0 0.25rem;
+    color: #222;
+  }
+
+  .print-sheet-patient-checklist .print-sheet-dl {
+    margin: 0.25rem 0 0.5rem;
+  }
+
+  .print-sheet-dl-inline {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.15rem 1rem;
+    font-size: 10pt;
+  }
+
+  .print-sheet-dl-inline dt {
+    font-weight: 600;
+    color: #444;
+    margin: 0;
+  }
+
+  .print-sheet-dl-inline dd {
+    margin: 0;
+  }
+
+  .print-sheet-list {
+    margin: 0.15rem 0 0 1rem;
+    padding: 0;
+    list-style: disc;
+    font-size: 10pt;
+  }
+
+  .print-sheet-list li {
+    margin-bottom: 0.15rem;
+  }
+
+  .print-sheet-columns {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-top: 0.35rem;
+  }
+
+  .print-sheet-col-left {
+    flex: 0 0 40%;
+    width: 40%;
+    max-width: 40%;
+  }
+
+  .print-sheet-col-right {
+    flex: 1;
+    width: 60%;
+    min-width: 0;
+  }
+
+  .print-sheet-prescription {
+    margin-bottom: 0;
+  }
+
+  .print-sheet-prescription-body {
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    padding: 0.5rem 0.65rem;
+    background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .print-sheet-prescription-pre {
+    margin: 0;
+    font-family: inherit;
+    font-size: 10pt;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .print-sheet-empty-muted {
+    margin: 0;
+    color: #888;
+    font-size: 10pt;
+  }
+
+  .print-sheet-block {
+    margin-bottom: 0.5rem;
+  }
+}
+

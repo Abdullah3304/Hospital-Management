@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
+import AssessmentPrintSheet from '../components/AssessmentPrintSheet';
 import { getDiseaseFlow } from '../config/diseaseFlows';
 
 const STEPS = ['history', 'investigation', 'treatmentPlan', 'prescription'];
@@ -10,6 +11,8 @@ export default function DiseaseManagement() {
   const navigate = useNavigate();
 
   const [patientName, setPatientName] = useState('');
+  const [patientAge, setPatientAge] = useState(null);
+  const [checklistRow, setChecklistRow] = useState(null);
   const [disease, setDisease] = useState(null);
   const [flow, setFlow] = useState(null);
   const [step, setStep] = useState(0);
@@ -26,10 +29,11 @@ export default function DiseaseManagement() {
     let cancelled = false;
     (async () => {
       try {
-        const [{ data: patient }, { data: diseases }, { data: assessment }] = await Promise.all([
+        const [{ data: patient }, { data: diseases }, { data: assessment }, { data: checklist }] = await Promise.all([
           api.get(`/patients/${id}`),
           api.get(`/patients/${id}/diseases`),
           api.get(`/patients/diseases/${diseaseId}/assessment`),
+          api.get(`/patients/diseases/${diseaseId}/checklist`),
         ]);
         if (cancelled) return;
 
@@ -40,6 +44,8 @@ export default function DiseaseManagement() {
         }
 
         setPatientName(patient.name);
+        setPatientAge(patient.age ?? null);
+        setChecklistRow(checklist || null);
         setDisease(current);
         setFlow(getDiseaseFlow(current.disease));
 
@@ -75,7 +81,6 @@ export default function DiseaseManagement() {
         prescription,
       });
       setSubmitted(true);
-      navigate(`/patients/${id}/diseases`);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save assessment.');
     } finally {
@@ -121,61 +126,84 @@ export default function DiseaseManagement() {
   const [stepData, setStepData] = stateBag[stepKey];
 
   return (
-    <div className="management-page">
-      <div className="page-header">
-        <h2 style={{ fontSize: '0.95rem', color: '#666', fontWeight: 500 }}>
-          {patientName} &mdash; {disease.disease}
-          {submitted && <span className="badge-submitted">Submitted</span>}
-        </h2>
-        <button onClick={() => navigate(`/patients/${id}/diseases`)} className="btn btn-secondary btn-sm">
-          Cancel
-        </button>
-      </div>
-
-      <div className="step-indicator">
-        {activeSteps.map((s, i) => (
-          <div key={s} className={`step-dot ${i === step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
-            <span>{i + 1}</span>
-          </div>
-        ))}
-      </div>
-
-      <h1 className="management-title">
-        {title.split('\n').map((line, i) => <div key={i}>{line}</div>)}
-      </h1>
-
-
-      {error && <div className="error-msg">{error}</div>}
-
-      <div className="management-card">
-        {sections.map(section => (
-          <Section
-            key={section.key}
-            section={section}
-            value={stepData[section.key]}
-            onChange={val => setStepData({ ...stepData, [section.key]: val })}
-          />
-        ))}
-      </div>
-
-      <div className="management-actions">
-        {step > 0 && (
-          <button onClick={() => setStep(step - 1)} className="btn btn-secondary">
-            Previous
+    <div className="management-page management-print-root">
+      <div className="management-screen-only">
+        <div className="page-header">
+          <h2 style={{ fontSize: '0.95rem', color: '#666', fontWeight: 500 }}>
+            {patientName} &mdash; {disease.disease}
+            {submitted && <span className="badge-submitted">Submitted</span>}
+          </h2>
+          <button onClick={() => navigate(`/patients/${id}/diseases`)} className="btn btn-secondary btn-sm">
+            Cancel
           </button>
-        )}
-        <div style={{ flex: 1 }} />
-        {!isLast && (
-          <button onClick={() => setStep(step + 1)} className="btn btn-primary">
-            Next
-          </button>
-        )}
-        {isLast && (
-          <button onClick={handleSubmit} disabled={saving} className="btn btn-primary">
-            {saving ? 'Saving...' : submitted ? 'Update' : 'Submit'}
-          </button>
-        )}
+        </div>
+
+        <div className="step-indicator">
+          {activeSteps.map((s, i) => (
+            <div key={s} className={`step-dot ${i === step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
+              <span>{i + 1}</span>
+            </div>
+          ))}
+        </div>
+
+        <h1 className="management-title">
+          {title.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+        </h1>
+
+        {error && <div className="error-msg">{error}</div>}
+
+        <div className="management-card">
+          {sections.map(section => (
+            <Section
+              key={section.key}
+              section={section}
+              value={stepData[section.key]}
+              onChange={val => setStepData({ ...stepData, [section.key]: val })}
+            />
+          ))}
+        </div>
+
+        <div className="management-actions">
+          {step > 0 && (
+            <button onClick={() => setStep(step - 1)} className="btn btn-secondary">
+              Previous
+            </button>
+          )}
+          <div style={{ flex: 1 }} />
+          {!isLast && (
+            <button onClick={() => setStep(step + 1)} className="btn btn-primary">
+              Next
+            </button>
+          )}
+          {isLast && (
+            <>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                disabled={!submitted}
+                className="btn btn-secondary"
+                title={submitted ? 'Print prescription' : 'Save first to enable printing'}
+              >
+                Print
+              </button>
+              <button onClick={handleSubmit} disabled={saving} className="btn btn-primary">
+                {saving ? 'Saving...' : submitted ? 'Update' : 'Submit'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      <AssessmentPrintSheet
+        patientName={patientName}
+        patientAge={patientAge}
+        diseaseName={disease?.disease}
+        checklist={checklistRow}
+        history={history}
+        investigation={investigation}
+        prescription={prescription}
+        flow={flow}
+      />
     </div>
   );
 }
