@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import { getDiseaseFlow } from '../config/diseaseFlows';
 
-const STEPS = ['history', 'investigation', 'treatmentPlan'];
+const STEPS = ['history', 'investigation', 'treatmentPlan', 'prescription'];
 
 export default function DiseaseManagement() {
   const { id, diseaseId } = useParams();
@@ -20,6 +20,7 @@ export default function DiseaseManagement() {
   const [history, setHistory] = useState({});
   const [investigation, setInvestigation] = useState({});
   const [treatmentPlan, setTreatmentPlan] = useState({});
+  const [prescription, setPrescription] = useState({});
 
   useEffect(() => {
     let cancelled = false;
@@ -46,6 +47,7 @@ export default function DiseaseManagement() {
           setHistory(assessment.history || {});
           setInvestigation(assessment.investigation || {});
           setTreatmentPlan(assessment.treatment_plan || {});
+          setPrescription(assessment.prescription || {});
           setSubmitted(!!assessment.submitted);
         }
       } catch (err) {
@@ -59,7 +61,8 @@ export default function DiseaseManagement() {
     history: [history, setHistory],
     investigation: [investigation, setInvestigation],
     treatmentPlan: [treatmentPlan, setTreatmentPlan],
-  }), [history, investigation, treatmentPlan]);
+    prescription: [prescription, setPrescription],
+  }), [history, investigation, treatmentPlan, prescription]);
 
   const handleSubmit = async () => {
     setSaving(true);
@@ -69,6 +72,7 @@ export default function DiseaseManagement() {
         history,
         investigation,
         treatment_plan: treatmentPlan,
+        prescription,
       });
       setSubmitted(true);
       navigate(`/patients/${id}/diseases`);
@@ -128,10 +132,6 @@ export default function DiseaseManagement() {
         </button>
       </div>
 
-      <h1 className="management-title">
-        {title.split('\n').map((line, i) => <div key={i}>{line}</div>)}
-      </h1>
-
       <div className="step-indicator">
         {activeSteps.map((s, i) => (
           <div key={s} className={`step-dot ${i === step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
@@ -139,6 +139,11 @@ export default function DiseaseManagement() {
           </div>
         ))}
       </div>
+
+      <h1 className="management-title">
+        {title.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+      </h1>
+
 
       {error && <div className="error-msg">{error}</div>}
 
@@ -214,6 +219,10 @@ function Section({ section, value, onChange }) {
     );
   }
 
+  if (section.type === 'prescription') {
+    return <PrescriptionField value={value} onChange={onChange} />;
+  }
+
   if (section.type === 'textarea') {
     return (
       <div className="management-section">
@@ -243,4 +252,41 @@ function Section({ section, value, onChange }) {
   }
 
   return null;
+}
+
+const BULLET = '• ';
+
+function PrescriptionField({ value, onChange }) {
+  const textareaRef = useRef(null);
+
+  const handleKeyDown = (e) => {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const text = value || '';
+    const insert = `\n${BULLET}`;
+    const next = text.slice(0, start) + insert + text.slice(end);
+    onChange(next);
+    const pos = start + insert.length;
+    requestAnimationFrame(() => {
+      if (!textareaRef.current) return;
+      textareaRef.current.selectionStart = pos;
+      textareaRef.current.selectionEnd = pos;
+    });
+  };
+
+  return (
+    <div className="management-section prescription-section">
+      <textarea
+        ref={textareaRef}
+        value={value || ''}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        rows={14}
+        placeholder="Enter prescription… (Enter for new bullet, Shift+Enter for new line)"
+      />
+    </div>
+  );
 }

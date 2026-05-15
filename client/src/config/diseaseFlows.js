@@ -5,6 +5,7 @@
 //   - { type: 'checkbox', key, title, options: [{ key, label }] }
 //   - { type: 'textarea', key, label }
 //   - { type: 'select',   key, label, options: ['...'] }
+//   - { type: 'prescription', key }  — bullet list (Enter = new bullet, Shift+Enter = newline)
 //
 // To add a new disease flow, add a new top-level entry. The DB stores the
 // responses as JSONB keyed by section.key so no schema changes are needed.
@@ -14,6 +15,7 @@ export const Obesity = {
     history: 'HISTORY',
     investigation: 'PRE-OPERATIVE INVESTIGATION\nBARIATRIC / METABOLIC SURGERY',
     treatmentPlan: 'TREATMENT PLAN',
+    prescription: 'PRESCRIPTION',
   },
   history: [
     {
@@ -146,6 +148,7 @@ export const Obesity = {
       ],
     },
   ],
+  prescription: [{ type: 'prescription', key: 'notes' }],
 };
 
 // Diabetes shares the entire Obesity flow, but its History page has one
@@ -174,11 +177,93 @@ export const Diabetes = {
   ],
 };
 
+// History + investigation only (same content as Diabetes initially; customize per disease as needed).
+export const DiabeticFoot = {
+  ...Diabetes,
+  steps: ['history', 'investigation', 'prescription'],
+};
+
+export const Laproscopic = {
+  ...Diabetes,
+  steps: ['history', 'investigation', 'prescription'],
+};
+
+export const NeuropathicPain = {
+  ...Diabetes,
+  steps: ['history', 'investigation', 'treatmentPlan', 'prescription'],
+  pageTitle: {
+    ...Obesity.pageTitle,
+    treatmentPlan: 'PAINFUL DIABETIC PERIPHERAL NEUROPATHY',
+    prescription: 'PRESCRIPTION',
+  },
+  treatmentPlan: [
+    {
+      type: 'checkbox',
+      key: 'risk_factors_lifestyle',
+      title: 'RISK FACTOR & LIFESTYLE MODIFICATIONS',
+      options: [
+        { key: 'optimise_glycaemic_control', label: 'Optimise glycaemic control' },
+        { key: 'optimise_cardiovascular_risk', label: 'Optimise cardiovascular risk factors' },
+      ],
+    },
+    {
+      type: 'checkbox',
+      key: 'mono_pharmacotherapy',
+      title: 'MONO PHARMACOTHERAPY',
+      options: [
+        { key: 'gabapentinoid', label: 'Gabapentinoid' },
+        { key: 'tca', label: 'TCA' },
+        { key: 'snri', label: 'SNRI' },
+      ],
+    },
+    {
+      type: 'checkbox',
+      key: 'non_pharmacological',
+      title: 'NON-PHARMACOLOGICAL TREATMENTS',
+      options: [
+        { key: 'psychological_support', label: 'Psychological support' },
+        { key: 'acupuncture', label: 'Acupuncture' },
+        { key: 'tens_frems', label: 'TENS-FREMS' },
+      ],
+    },
+    {
+      type: 'checkbox',
+      key: 'combination_pharmacotherapy',
+      title: 'COMBINATION PHARMACOTHERAPY',
+      options: [
+        { key: 'gabapentinoid_tca_snri', label: 'Gabapentinoid + TCA or SNRI' },
+        { key: 'tca_gabapentinoid', label: 'TCA + Gabapentinoid' },
+        { key: 'snri_gabapentinoid', label: 'SNRI + Gabapentinoid' },
+      ],
+    },
+    {
+      type: 'checkbox',
+      key: 'additional_treatment',
+      title: 'ADDITIONAL TREATMENT',
+      options: [
+        { key: 'capsaicin_patch', label: 'Capsaicin 8% patch' },
+        { key: 'lidocaine_patch', label: 'Lidocaine 5% patch' },
+        { key: 'tramadol_short_term', label: 'Tramadol (short-term)' },
+      ],
+    },
+    {
+      type: 'checkbox',
+      key: 'specialist_pain_service',
+      title: 'SPECIALIST PAIN SERVICE TREATMENT',
+      options: [
+        { key: 'spinal_cord_stimulation', label: 'Spinal cord stimulation' },
+        { key: 'lidocaine_infusion', label: 'Lidocaine infusion' },
+      ],
+    },
+  ],
+};
+
 export const ErectileDysfunction = {
-  steps: ['history', 'investigation'],
+  steps: ['history', 'investigation', 'prescription'],
   pageTitle: {
     history: 'HISTORY',
     investigation: 'PHYSICAL EXAMINATION',
+    prescription: 'PRESCRIPTION',
   },
   history: [
     { type: 'select', key: 'morning_erection', label: 'Morning Erection', options: ['Yes', 'No'] },
@@ -251,11 +336,15 @@ export const ErectileDysfunction = {
       ],
     },
   ],
+  prescription: [{ type: 'prescription', key: 'notes' }],
 };
 
 const DISEASE_FLOWS = {
   Obesity,
   Diabetes,
+  'Diabetic Foot': DiabeticFoot,
+  Laproscopic,
+  'Neuropathic Pain': NeuropathicPain,
   'Erectile Dysfunction': ErectileDysfunction,
 };
 

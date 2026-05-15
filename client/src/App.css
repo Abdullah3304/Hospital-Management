@@ -250,6 +250,52 @@ textarea {
   box-shadow: 0 12px 40px rgba(0,0,0,0.2);
 }
 
+.modal-checklist {
+  width: 520px;
+}
+
+.modal-checklist .form-group {
+  margin-bottom: 0.85rem;
+}
+
+.modal-checklist .form-group label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.35rem;
+}
+
+.modal-checklist .form-group input[type="text"],
+.modal-checklist .form-group input[type="number"] {
+  width: 100%;
+}
+
+.modal-checklist .form-group textarea {
+  width: 100%;
+  min-height: 80px;
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.input-with-unit input {
+  flex: 1;
+  min-width: 0;
+}
+
+.input-unit {
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  color: #666;
+  white-space: nowrap;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
