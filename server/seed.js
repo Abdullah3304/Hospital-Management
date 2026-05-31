@@ -57,15 +57,26 @@ async function seed() {
     await client.query(`DROP TRIGGER IF EXISTS patient_diseases_updated_at ON patient_diseases`);
     await client.query(`CREATE TRIGGER patient_diseases_updated_at BEFORE UPDATE ON patient_diseases FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
 
+    await client.query(`DROP TABLE IF EXISTS disease_checklists CASCADE`);
     await client.query(`
-      CREATE TABLE IF NOT EXISTS disease_checklists (
+      CREATE TABLE disease_checklists (
         id SERIAL PRIMARY KEY,
         patient_disease_id INTEGER REFERENCES patient_diseases(id) ON DELETE CASCADE UNIQUE,
-        blood_pressure BOOLEAN DEFAULT FALSE,
-        weight BOOLEAN DEFAULT FALSE,
-        scan BOOLEAN DEFAULT FALSE,
-        medication BOOLEAN DEFAULT FALSE,
-        doctor_notes TEXT,
+        blood_pressure TEXT,
+        pulse TEXT,
+        temperature TEXT,
+        respiratory_rate TEXT,
+        weight_kg NUMERIC,
+        height_m NUMERIC,
+        bmi NUMERIC,
+        chronic_diseases TEXT,
+        stroke BOOLEAN DEFAULT FALSE,
+        ckd BOOLEAN DEFAULT FALSE,
+        ckd_stage TEXT,
+        dcld BOOLEAN DEFAULT FALSE,
+        pregnancy BOOLEAN DEFAULT FALSE,
+        pregnancy_stage TEXT,
+        notes TEXT,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
@@ -75,13 +86,15 @@ async function seed() {
 
     // Per-disease management assessment. JSONB columns allow each disease
     // to define its own sections/options on the frontend without schema migrations.
+    await client.query(`DROP TABLE IF EXISTS treatment_assessments CASCADE`);
     await client.query(`
-      CREATE TABLE IF NOT EXISTS treatment_assessments (
+      CREATE TABLE treatment_assessments (
         id SERIAL PRIMARY KEY,
         patient_disease_id INTEGER REFERENCES patient_diseases(id) ON DELETE CASCADE UNIQUE,
         history JSONB NOT NULL DEFAULT '{}'::jsonb,
         investigation JSONB NOT NULL DEFAULT '{}'::jsonb,
         treatment_plan JSONB NOT NULL DEFAULT '{}'::jsonb,
+        prescription JSONB NOT NULL DEFAULT '{}'::jsonb,
         submitted BOOLEAN NOT NULL DEFAULT FALSE,
         submitted_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW(),
@@ -92,15 +105,21 @@ async function seed() {
     await client.query(`DROP TRIGGER IF EXISTS treatment_assessments_updated_at ON treatment_assessments`);
     await client.query(`CREATE TRIGGER treatment_assessments_updated_at BEFORE UPDATE ON treatment_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
 
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const adminHash = await bcrypt.hash('admin123', 10);
     await client.query(
       `INSERT INTO users (username, password) VALUES ('admin', $1) ON CONFLICT (username) DO NOTHING`,
-      [hashedPassword]
+      [adminHash]
+    );
+
+    const doctorHash = await bcrypt.hash('doctor123', 10);
+    await client.query(
+      `INSERT INTO users (username, password) VALUES ('doctor', $1) ON CONFLICT (username) DO NOTHING`,
+      [doctorHash]
     );
 
     await client.query('COMMIT');
     console.log('Seed completed successfully!');
-    console.log('Login: admin / admin123');
+    console.log('Login: admin / admin123  |  doctor / doctor123');
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Seed failed:', err.message);

@@ -167,15 +167,60 @@ router.get('/diseases/:diseaseId/checklist', async (req, res) => {
 });
 
 router.put('/diseases/:diseaseId/checklist', async (req, res) => {
-  const { blood_pressure, weight, scan, medication, doctor_notes } = req.body;
+  const {
+    blood_pressure = '',
+    pulse = '',
+    temperature = '',
+    respiratory_rate = '',
+    weight_kg = null,
+    height_m = null,
+    bmi = null,
+    chronic_diseases = '',
+    stroke = false,
+    ckd = false,
+    ckd_stage = null,
+    dcld = false,
+    pregnancy = false,
+    pregnancy_stage = null,
+    notes = '',
+  } = req.body;
+
+  let computedBmi = bmi;
+  if (weight_kg != null && height_m != null && Number(height_m) > 0) {
+    computedBmi = Number((Number(weight_kg) / (Number(height_m) ** 2)).toFixed(2));
+  }
+
   try {
     const { rows } = await pool.query(`
-      INSERT INTO disease_checklists (patient_disease_id, blood_pressure, weight, scan, medication, doctor_notes)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO disease_checklists (
+        patient_disease_id, blood_pressure, pulse, temperature, respiratory_rate,
+        weight_kg, height_m, bmi, chronic_diseases,
+        stroke, ckd, ckd_stage, dcld, pregnancy, pregnancy_stage, notes
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       ON CONFLICT (patient_disease_id) DO UPDATE SET
-        blood_pressure=$2, weight=$3, scan=$4, medication=$5, doctor_notes=$6
+        blood_pressure=$2, pulse=$3, temperature=$4, respiratory_rate=$5,
+        weight_kg=$6, height_m=$7, bmi=$8, chronic_diseases=$9,
+        stroke=$10, ckd=$11, ckd_stage=$12, dcld=$13, pregnancy=$14, pregnancy_stage=$15, notes=$16
       RETURNING *
-    `, [req.params.diseaseId, blood_pressure || false, weight || false, scan || false, medication || false, doctor_notes || '']);
+    `, [
+      req.params.diseaseId,
+      blood_pressure || '',
+      pulse || '',
+      temperature || '',
+      respiratory_rate || '',
+      weight_kg,
+      height_m,
+      computedBmi,
+      chronic_diseases || '',
+      !!stroke,
+      !!ckd,
+      ckd ? (ckd_stage || null) : null,
+      !!dcld,
+      !!pregnancy,
+      pregnancy ? (pregnancy_stage || null) : null,
+      notes || '',
+    ]);
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -198,17 +243,17 @@ router.get('/diseases/:diseaseId/assessment', async (req, res) => {
 });
 
 router.put('/diseases/:diseaseId/assessment', async (req, res) => {
-  const { history = {}, investigation = {}, treatment_plan = {} } = req.body;
+  const { history = {}, investigation = {}, treatment_plan = {}, prescription = {} } = req.body;
   try {
     const { rows } = await pool.query(`
-      INSERT INTO treatment_assessments (patient_disease_id, history, investigation, treatment_plan, submitted, submitted_at)
-      VALUES ($1, $2, $3, $4, TRUE, NOW())
+      INSERT INTO treatment_assessments (patient_disease_id, history, investigation, treatment_plan, prescription, submitted, submitted_at)
+      VALUES ($1, $2, $3, $4, $5, TRUE, NOW())
       ON CONFLICT (patient_disease_id) DO UPDATE SET
-        history=$2, investigation=$3, treatment_plan=$4,
+        history=$2, investigation=$3, treatment_plan=$4, prescription=$5,
         submitted=TRUE,
         submitted_at=COALESCE(treatment_assessments.submitted_at, NOW())
       RETURNING *
-    `, [req.params.diseaseId, history, investigation, treatment_plan]);
+    `, [req.params.diseaseId, history, investigation, treatment_plan, prescription]);
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
