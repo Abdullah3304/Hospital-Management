@@ -105,15 +105,21 @@ async function seed() {
     await client.query(`DROP TRIGGER IF EXISTS treatment_assessments_updated_at ON treatment_assessments`);
     await client.query(`CREATE TRIGGER treatment_assessments_updated_at BEFORE UPDATE ON treatment_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
 
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const adminHash = await bcrypt.hash('admin123', 10);
     await client.query(
       `INSERT INTO users (username, password) VALUES ('admin', $1) ON CONFLICT (username) DO NOTHING`,
-      [hashedPassword]
+      [adminHash]
+    );
+
+    const doctorHash = await bcrypt.hash('doctor123', 10);
+    await client.query(
+      `INSERT INTO users (username, password) VALUES ('doctor', $1) ON CONFLICT (username) DO NOTHING`,
+      [doctorHash]
     );
 
     await client.query('COMMIT');
     console.log('Seed completed successfully!');
-    console.log('Login: admin / admin123');
+    console.log('Login: admin / admin123  |  doctor / doctor123');
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Seed failed:', err.message);
