@@ -2,7 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import AssessmentPrintSheet from '../components/AssessmentPrintSheet';
+import DiabetesIntensiveTreatmentPlan from '../components/DiabetesIntensiveTreatmentPlan';
 import { getDiseaseFlow } from '../config/diseaseFlows';
+import { printAssessmentSheet } from '../utils/printAssessment';
+import { validateDiabetesChecklist, validateDiabetesHistory } from '../utils/diabetesValidation';
+import { isDiabetesIntensiveTreatmentPlan } from '../utils/diabetesIntensiveTreatmentPlan';
 
 const STEPS = ['history', 'investigation', 'treatmentPlan', 'prescription'];
 
@@ -63,6 +67,23 @@ export default function DiseaseManagement() {
     return () => { cancelled = true; };
   }, [id, diseaseId]);
 
+  useEffect(() => {
+    let savedTitle = document.title;
+    const onBeforePrint = () => {
+      savedTitle = document.title;
+      document.title = ' ';
+    };
+    const onAfterPrint = () => {
+      document.title = savedTitle;
+    };
+    window.addEventListener('beforeprint', onBeforePrint);
+    window.addEventListener('afterprint', onAfterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', onBeforePrint);
+      window.removeEventListener('afterprint', onAfterPrint);
+    };
+  }, []);
+
   const stateBag = useMemo(() => ({
     history: [history, setHistory],
     investigation: [investigation, setInvestigation],
@@ -70,7 +91,21 @@ export default function DiseaseManagement() {
     prescription: [prescription, setPrescription],
   }), [history, investigation, treatmentPlan, prescription]);
 
+  const intensiveDiabetesTreatmentPlan = useMemo(
+    () => disease?.disease === 'Diabetes' && isDiabetesIntensiveTreatmentPlan(history),
+    [disease?.disease, history],
+  );
+
   const handleSubmit = async () => {
+    if (disease?.disease === 'Diabetes') {
+      const checklistErr = validateDiabetesChecklist(checklistRow);
+      const historyErr = validateDiabetesHistory(history);
+      const msg = checklistErr || historyErr;
+      if (msg) {
+        setError(msg);
+        return;
+      }
+    }
     setSaving(true);
     setError('');
     try {
@@ -153,14 +188,56 @@ export default function DiseaseManagement() {
         {error && <div className="error-msg">{error}</div>}
 
         <div className="management-card">
-          {sections.map(section => (
+          {stepKey === 'treatmentPlan' && intensiveDiabetesTreatmentPlan ? (
+            <DiabetesIntensiveTreatmentPlan
+              patientAge={patientAge}
+              checklistRow={checklistRow}
+              history={history}
+              treatmentPlan={treatmentPlan}
+              setTreatmentPlan={setTreatmentPlan}
+            />
+          ) : Array.isArray(sections) ? (
+            sections.map(section => (
             <Section
               key={section.key}
               section={section}
               value={stepData[section.key]}
-              onChange={val => setStepData({ ...stepData, [section.key]: val })}
+              onChange={(val) => {
+                if (disease?.disease === 'Diabetes' && stepKey === 'history' && section.key === 'comorbidities') {
+                  setHistory((h) => {
+                    const n = { ...h, comorbidities: val };
+                    if (Array.isArray(val) && !val.includes('ihd')) n.ihd_stability = '';
+                    return n;
+                  });
+                } else if (disease?.disease === 'Diabetes' && stepKey === 'history' && section.key === 'diabetes_specific_investigation') {
+                  setHistory((h) => {
+                    const n = { ...h, diabetes_specific_investigation: val };
+                    if (Array.isArray(val) && !val.includes('hba1c')) n.hba1c_value = '';
+                    return n;
+                  });
+                } else {
+                  setStepData({ ...stepData, [section.key]: val });
+                }
+              }}
+              diabetesIhd={
+                disease?.disease === 'Diabetes' && stepKey === 'history' && section.key === 'comorbidities'
+                  ? {
+                      stability: stepData.ihd_stability,
+                      merge: (patch) => setHistory((h) => ({ ...h, ...patch })),
+                    }
+                  : null
+              }
+              hba1cFollowup={
+                disease?.disease === 'Diabetes' && stepKey === 'history' && section.key === 'diabetes_specific_investigation'
+                  ? {
+                      value: stepData.hba1c_value ?? '',
+                      merge: (patch) => setHistory((h) => ({ ...h, ...patch })),
+                    }
+                  : null
+              }
             />
-          ))}
+          ))
+          ) : null}
         </div>
 
         <div className="management-actions">
@@ -179,7 +256,7 @@ export default function DiseaseManagement() {
             <>
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={printAssessmentSheet}
                 disabled={!submitted}
                 className="btn btn-secondary"
                 title={submitted ? 'Print prescription' : 'Save first to enable printing'}
@@ -199,7 +276,6 @@ export default function DiseaseManagement() {
         patientAge={patientAge}
         diseaseName={disease?.disease}
         checklist={checklistRow}
-        history={history}
         investigation={investigation}
         prescription={prescription}
         flow={flow}
@@ -208,7 +284,184 @@ export default function DiseaseManagement() {
   );
 }
 
-function Section({ section, value, onChange }) {
+function StaticSection({ section }) {
+  return (
+    <div className="management-section management-static-block">
+      <h3 className="section-title">{section.title}</h3>
+      <div className="management-static-body">{section.body}</div>
+    </div>
+  );
+}
+
+function BilateralYesNoGridSection({ section, value, onChange }) {
+  const data = value && typeof value === 'object' ? value : {};
+  const setCell = (rowKey, side, yn) => {
+    const rowVal = data[rowKey] && typeof data[rowKey] === 'object' ? data[rowKey] : {};
+    onChange({ ...data, [rowKey]: { ...rowVal, [side]: yn } });
+  };
+  return (
+    <div className="management-section">
+      <h3 className="section-title">{section.title}</h3>
+      <table className="bilateral-yesno-table">
+        <thead>
+          <tr>
+            <th className="bilateral-yesno-label-col" />
+            <th>Right</th>
+            <th>Left</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(section.rows || []).map((row) => {
+            const rowVal = data[row.key] && typeof data[row.key] === 'object' ? data[row.key] : {};
+            return (
+              <tr key={row.key}>
+                <td className="bilateral-yesno-label-col">{row.label}</td>
+                <td>
+                  <select
+                    className="bilateral-yesno-select"
+                    value={rowVal.right || ''}
+                    onChange={e => setCell(row.key, 'right', e.target.value)}
+                  >
+                    <option value="">—</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </td>
+                <td>
+                  <select
+                    className="bilateral-yesno-select"
+                    value={rowVal.left || ''}
+                    onChange={e => setCell(row.key, 'left', e.target.value)}
+                  >
+                    <option value="">—</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MonofilamentSitesSection({ section, value, onChange }) {
+  const data = value && typeof value === 'object' ? value : { right: {}, left: {} };
+  const right = data.right && typeof data.right === 'object' ? data.right : {};
+  const left = data.left && typeof data.left === 'object' ? data.left : {};
+
+  const setMark = (side, siteKey, mark) => {
+    const sideObj = { ...(side === 'right' ? right : left) };
+    if (mark === 'clear') {
+      delete sideObj[siteKey];
+    } else {
+      sideObj[siteKey] = mark;
+    }
+    onChange({ ...data, [side]: sideObj });
+  };
+
+  return (
+    <div className="management-section">
+      <h3 className="section-title">{section.title}</h3>
+      {section.instruction && (
+        <p className="monofilament-instruction">{section.instruction}</p>
+      )}
+      <table className="monofilament-sites-table">
+        <thead>
+          <tr>
+            <th>Site</th>
+            <th>Right</th>
+            <th>Left</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(section.sites || []).map((site) => (
+            <tr key={site.key}>
+              <td>{site.label}</td>
+              <td>
+                <div className="monofilament-toggle-group">
+                  <button
+                    type="button"
+                    className={`monofilament-btn ${right[site.key] === '+' ? 'active' : ''}`}
+                    onClick={() => setMark('right', site.key, '+')}
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    className={`monofilament-btn ${right[site.key] === '-' ? 'active' : ''}`}
+                    onClick={() => setMark('right', site.key, '-')}
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm monofilament-clear"
+                    onClick={() => setMark('right', site.key, 'clear')}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </td>
+              <td>
+                <div className="monofilament-toggle-group">
+                  <button
+                    type="button"
+                    className={`monofilament-btn ${left[site.key] === '+' ? 'active' : ''}`}
+                    onClick={() => setMark('left', site.key, '+')}
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    className={`monofilament-btn ${left[site.key] === '-' ? 'active' : ''}`}
+                    onClick={() => setMark('left', site.key, '-')}
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm monofilament-clear"
+                    onClick={() => setMark('left', site.key, 'clear')}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Digits and at most one decimal point (for optional HbA1C % field). */
+function sanitizeHbA1cNumericInput(raw) {
+  if (raw == null || raw === '') return '';
+  let s = String(raw).replace(/[^\d.]/g, '');
+  const dot = s.indexOf('.');
+  if (dot !== -1) {
+    s = `${s.slice(0, dot + 1)}${s.slice(dot + 1).replace(/\./g, '')}`;
+  }
+  return s;
+}
+
+function Section({ section, value, onChange, diabetesIhd, hba1cFollowup }) {
+  if (section.type === 'static') {
+    return <StaticSection section={section} />;
+  }
+
+  if (section.type === 'bilateralYesNoGrid') {
+    return <BilateralYesNoGridSection section={section} value={value} onChange={onChange} />;
+  }
+
+  if (section.type === 'monofilamentSites') {
+    return <MonofilamentSitesSection section={section} value={value} onChange={onChange} />;
+  }
+
   if (section.type === 'checkbox') {
     const selected = Array.isArray(value) ? value : [];
     const toggle = (key) => {
@@ -229,6 +482,47 @@ function Section({ section, value, onChange }) {
             </label>
           ))}
         </div>
+        {diabetesIhd && selected.includes('ihd') && (
+          <div className="ihd-stability-followup">
+            <p className="ihd-stability-label">IHD classification (required)</p>
+            <label className="checkbox-row">
+              <input
+                type="radio"
+                name="diabetes-ihd-stability"
+                checked={diabetesIhd.stability === 'stable'}
+                onChange={() => diabetesIhd.merge({ ihd_stability: 'stable' })}
+              />
+              <span>Stable</span>
+            </label>
+            <label className="checkbox-row">
+              <input
+                type="radio"
+                name="diabetes-ihd-stability"
+                checked={diabetesIhd.stability === 'unstable'}
+                onChange={() => diabetesIhd.merge({ ihd_stability: 'unstable' })}
+              />
+              <span>Unstable</span>
+            </label>
+          </div>
+        )}
+        {hba1cFollowup && selected.includes('hba1c') && (
+          <div className="hba1c-value-followup">
+            <label className="hba1c-value-label" htmlFor="diabetes-hba1c-value">HbA1C value (optional, numeric)</label>
+            <input
+              id="diabetes-hba1c-value"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              className="hba1c-value-input"
+              value={hba1cFollowup.value}
+              onChange={(e) => {
+                const v = sanitizeHbA1cNumericInput(e.target.value);
+                hba1cFollowup.merge({ hba1c_value: v });
+              }}
+              placeholder="e.g. 7.2"
+            />
+          </div>
+        )}
       </div>
     );
   }

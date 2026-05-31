@@ -10,23 +10,17 @@ export default function AssessmentPrintSheet({
   patientAge,
   diseaseName,
   checklist,
-  history,
   investigation,
   prescription,
   flow,
 }) {
   const checklistEntries = useMemo(() => getFilledChecklistEntries(checklist), [checklist]);
-  const historyBlocks = useMemo(
-    () => getFilledFlowStepSections(flow, 'history', history),
-    [flow, history],
-  );
   const investigationBlocks = useMemo(
     () => getFilledFlowStepSections(flow, 'investigation', investigation),
     [flow, investigation],
   );
   const prescriptionText = useMemo(() => getPrescriptionNotes(prescription), [prescription]);
 
-  const historyTitle = flow?.pageTitle?.history?.split('\n')[0] || 'History';
   const investigationTitle =
     flow?.pageTitle?.investigation?.split('\n')[0] || 'Investigation';
 
@@ -69,22 +63,6 @@ export default function AssessmentPrintSheet({
               </>
             )}
           </section>
-
-          {historyBlocks.length > 0 && (
-            <section className="print-sheet-section print-sheet-section-spaced">
-              <h2 className="print-sheet-heading">{historyTitle}</h2>
-              {historyBlocks.map((block, bi) => (
-                <div key={`h-${bi}`} className="print-sheet-block">
-                  <h3 className="print-sheet-subheading">{block.heading}</h3>
-                  <ul className="print-sheet-list">
-                    {block.lines.map((line, li) => (
-                      <li key={`h-${bi}-${li}`}>{line.text}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </section>
-          )}
 
           {investigationBlocks.length > 0 && (
             <section className="print-sheet-section print-sheet-section-spaced">

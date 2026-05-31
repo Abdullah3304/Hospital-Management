@@ -25,7 +25,7 @@ body {
 }
 
 .header-logo {
-  height: 56px;
+  height: 90px;
   width: auto;
   cursor: pointer;
   object-fit: contain;
@@ -350,6 +350,128 @@ textarea {
   flex-wrap: wrap;
 }
 
+.label-required {
+  color: #c62828;
+  font-weight: 700;
+}
+
+.checklist-suboptions {
+  margin: 0.35rem 0 0.75rem 1.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.radio-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  cursor: pointer;
+}
+
+.radio-row input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #1976d2;
+}
+
+.ihd-stability-followup {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #ccc;
+}
+
+.ihd-stability-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.hba1c-value-followup {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #ccc;
+}
+
+.hba1c-value-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.hba1c-value-input {
+  max-width: 12rem;
+}
+
+.diabetes-guidance-section {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.diabetes-guidance-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.diabetes-guidance-card {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 0.75rem;
+  pointer-events: none;
+  user-select: text;
+}
+
+.diabetes-guidance-card-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.diabetes-guidance-card-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #334155;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.diabetes-guidance-card-list li {
+  margin-bottom: 0.35rem;
+}
+
+.diabetes-guidance-notes-wrap {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+}
+
+.diabetes-guidance-notes-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1976d2;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.diabetes-guidance-notes {
+  width: 100%;
+  min-height: 5rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
 /* ===== Disease Management Wizard ===== */
 .management-page {
   max-width: 900px;
@@ -419,6 +541,103 @@ textarea {
   gap: 0.25rem 1.5rem;
 }
 
+.management-static-body {
+  white-space: pre-line;
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.45;
+  padding: 0.5rem 0.75rem;
+  background: #f5f7fa;
+  border-radius: 6px;
+  border: 1px solid #e0e4ea;
+}
+
+.bilateral-yesno-table,
+.monofilament-sites-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.bilateral-yesno-table th,
+.bilateral-yesno-table td,
+.monofilament-sites-table th,
+.monofilament-sites-table td {
+  border: 1px solid #ddd;
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.bilateral-yesno-table thead th,
+.monofilament-sites-table thead th {
+  background: #f0f4f8;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.bilateral-yesno-label-col {
+  min-width: 8rem;
+  width: 38%;
+}
+
+.bilateral-yesno-select {
+  width: 100%;
+  max-width: 10rem;
+}
+
+.monofilament-instruction {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #444;
+  line-height: 1.4;
+}
+
+.monofilament-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.monofilament-btn {
+  min-width: 2.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.monofilament-btn:hover {
+  background: #e3f2fd;
+  border-color: #1976d2;
+}
+
+.monofilament-btn.active {
+  background: #1976d2;
+  border-color: #1976d2;
+  color: #fff;
+}
+
+.monofilament-clear {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.75rem;
+}
+
+.management-section input[type="text"],
+.management-section input[type="number"] {
+  width: 100%;
+  max-width: 24rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
 .management-section textarea,
 .management-section select {
   width: 100%;
@@ -450,6 +669,15 @@ textarea {
 }
 
 @media print {
+  @page {
+    margin: 0;
+  }
+
+  body {
+    padding: 6mm 14mm 14mm;
+    box-sizing: border-box;
+  }
+
   .layout > .header {
     display: none !important;
   }
@@ -479,7 +707,7 @@ textarea {
   .print-sheet-top {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: 1rem;
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
@@ -489,12 +717,14 @@ textarea {
   .print-sheet-brand {
     flex: 0 0 auto;
     max-width: 45%;
+    line-height: 0;
   }
 
   .print-sheet-logo-alcods {
-    max-height: 56px;
+    max-height: 100px;
     width: auto;
     display: block;
+    margin: 0;
   }
 
   .print-sheet-doctor-slot {

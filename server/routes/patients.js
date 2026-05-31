@@ -178,8 +178,10 @@ router.put('/diseases/:diseaseId/checklist', async (req, res) => {
     chronic_diseases = '',
     stroke = false,
     ckd = false,
+    ckd_stage = null,
     dcld = false,
     pregnancy = false,
+    pregnancy_stage = null,
     notes = '',
   } = req.body;
 
@@ -193,13 +195,13 @@ router.put('/diseases/:diseaseId/checklist', async (req, res) => {
       INSERT INTO disease_checklists (
         patient_disease_id, blood_pressure, pulse, temperature, respiratory_rate,
         weight_kg, height_m, bmi, chronic_diseases,
-        stroke, ckd, dcld, pregnancy, notes
+        stroke, ckd, ckd_stage, dcld, pregnancy, pregnancy_stage, notes
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       ON CONFLICT (patient_disease_id) DO UPDATE SET
         blood_pressure=$2, pulse=$3, temperature=$4, respiratory_rate=$5,
         weight_kg=$6, height_m=$7, bmi=$8, chronic_diseases=$9,
-        stroke=$10, ckd=$11, dcld=$12, pregnancy=$13, notes=$14
+        stroke=$10, ckd=$11, ckd_stage=$12, dcld=$13, pregnancy=$14, pregnancy_stage=$15, notes=$16
       RETURNING *
     `, [
       req.params.diseaseId,
@@ -213,8 +215,10 @@ router.put('/diseases/:diseaseId/checklist', async (req, res) => {
       chronic_diseases || '',
       !!stroke,
       !!ckd,
+      ckd ? (ckd_stage || null) : null,
       !!dcld,
       !!pregnancy,
+      pregnancy ? (pregnancy_stage || null) : null,
       notes || '',
     ]);
     res.json(rows[0]);

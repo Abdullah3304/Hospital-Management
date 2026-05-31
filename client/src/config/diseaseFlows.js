@@ -6,6 +6,9 @@
 //   - { type: 'textarea', key, label }
 //   - { type: 'select',   key, label, options: ['...'] }
 //   - { type: 'prescription', key }  — bullet list (Enter = new bullet, Shift+Enter = newline)
+//   - { type: 'static', key, title, body }  — read-only (e.g. ABPI reference scale)
+//   - { type: 'bilateralYesNoGrid', key, title, rows: [{ key, label }] }
+//   - { type: 'monofilamentSites', key, title, instruction?, sites: [{ key, label }] }
 //
 // To add a new disease flow, add a new top-level entry. The DB stores the
 // responses as JSONB keyed by section.key so no schema changes are needed.
@@ -177,10 +180,118 @@ export const Diabetes = {
   ],
 };
 
-// History + investigation only (same content as Diabetes initially; customize per disease as needed).
+// Diabetic Foot: same history + investigation as Diabetes; step 3 = foot exam (stored in treatment_plan JSONB); step 4 = prescription.
 export const DiabeticFoot = {
   ...Diabetes,
-  steps: ['history', 'investigation', 'prescription'],
+  steps: ['history', 'investigation', 'treatmentPlan', 'prescription'],
+  pageTitle: {
+    ...Diabetes.pageTitle,
+    treatmentPlan: 'DIABETIC FOOT EXAM',
+  },
+  treatmentPlan: [
+    {
+      type: 'bilateralYesNoGrid',
+      key: 'foot_inspection',
+      title: 'INSPECTION',
+      rows: [
+        { key: 'deformities', label: 'Deformities' },
+        { key: 'callus', label: 'Callus' },
+        { key: 'ulceration', label: 'Ulceration' },
+        { key: 'amputation', label: 'Amputation' },
+      ],
+    },
+    {
+      type: 'bilateralYesNoGrid',
+      key: 'palpable_pulses',
+      title: 'PALPABLE PULSES',
+      rows: [
+        { key: 'dorsalis_pedis', label: 'Dorsalis pedis' },
+        { key: 'tibialis_posterior', label: 'Tibialis posterior' },
+      ],
+    },
+    {
+      type: 'static',
+      key: 'abpi_reference',
+      title: 'ANKLE BRACHIAL PRESSURE INDEX (ABPI) — reference',
+      body: `1.00 to 1.29: normal
+0.91 to 0.99: borderline ischemia
+0.41 to 0.90: mild to moderate ischemia
+0.40 or less: severe disease`,
+    },
+    { type: 'text', key: 'abpi_right', label: 'ABPI — Right' },
+    { type: 'text', key: 'abpi_left', label: 'ABPI — Left' },
+    {
+      type: 'monofilamentSites',
+      key: 'sensory_monofilament',
+      title: 'SENSORY FOOT EXAM (10g MONOFILAMENT)',
+      instruction:
+        'Label each site with + if the patient can feel the 10-gram nylon filament, − if not. Use Clear to reset a site.',
+      sites: [
+        { key: 'toe_1', label: '1st toe (pad)' },
+        { key: 'toe_3', label: '3rd toe (pad)' },
+        { key: 'toe_5', label: '5th toe (pad)' },
+        { key: 'mth_1', label: '1st metatarsal head' },
+        { key: 'mth_3', label: '3rd metatarsal head' },
+        { key: 'mth_5', label: '5th metatarsal head' },
+        { key: 'midfoot_medial', label: 'Medial midfoot' },
+        { key: 'midfoot_lateral', label: 'Lateral midfoot' },
+        { key: 'heel', label: 'Heel' },
+        { key: 'hallux_dorsal', label: 'Hallux (dorsal / nail bed area)' },
+      ],
+    },
+    {
+      type: 'static',
+      key: 'vibratory_instruction',
+      title: 'VIBRATORY SENSATION',
+      body:
+        'Using a Rydell–Seiffer tuning fork, test the areas indicated by the clinical protocol; record the score for each foot below.',
+    },
+    { type: 'text', key: 'vibratory_right', label: 'Vibratory score — Right foot' },
+    { type: 'text', key: 'vibratory_left', label: 'Vibratory score — Left foot' },
+    {
+      type: 'checkbox',
+      key: 'risk_low',
+      title: 'LOW-RISK PATIENT (all of the following that apply)',
+      options: [
+        { key: 'intact_protective_sensation', label: 'Intact protective sensation' },
+        { key: 'pedal_pulses_present', label: 'Pedal pulses present' },
+        { key: 'no_severe_deformity', label: 'No severe deformity' },
+        { key: 'no_prior_foot_ulcer', label: 'No prior foot ulcer' },
+        { key: 'no_amputation', label: 'No amputation' },
+      ],
+    },
+    {
+      type: 'checkbox',
+      key: 'risk_high',
+      title: 'HIGH-RISK PATIENT (one or more of the following)',
+      options: [
+        { key: 'loss_protective_sensation', label: 'Loss of protective sensation' },
+        { key: 'history_foot_ulcer', label: 'History of foot ulcer' },
+        { key: 'absent_pedal_pulses', label: 'Absent pedal pulses' },
+        { key: 'severe_foot_deformity', label: 'Severe foot deformity' },
+      ],
+    },
+    {
+      type: 'select',
+      key: 'education_prior',
+      label: 'Has the patient had prior foot care education?',
+      options: ['Yes', 'No'],
+    },
+    {
+      type: 'select',
+      key: 'education_self_care',
+      label: 'Can the patient demonstrate appropriate self-care?',
+      options: ['Yes', 'No'],
+    },
+    {
+      type: 'checkbox',
+      key: 'management_plan',
+      title: 'MANAGEMENT PLAN',
+      options: [
+        { key: 'provide_preventive_education', label: 'Provide patient education for preventive foot care' },
+      ],
+    },
+  ],
 };
 
 export const Laproscopic = {

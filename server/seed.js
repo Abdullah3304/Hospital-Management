@@ -72,8 +72,10 @@ async function seed() {
         chronic_diseases TEXT,
         stroke BOOLEAN DEFAULT FALSE,
         ckd BOOLEAN DEFAULT FALSE,
+        ckd_stage TEXT,
         dcld BOOLEAN DEFAULT FALSE,
         pregnancy BOOLEAN DEFAULT FALSE,
+        pregnancy_stage TEXT,
         notes TEXT,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
