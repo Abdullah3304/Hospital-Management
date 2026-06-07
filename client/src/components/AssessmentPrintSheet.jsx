@@ -31,9 +31,11 @@ export default function AssessmentPrintSheet({
           <img src="/logo.png" alt="ALCODS" className="print-sheet-logo-alcods" />
         </div>
         <div className="print-sheet-doctor-slot">
-          <span className="print-sheet-doctor-slot-label">
-            Doctor / practice logo and details — add asset later
-          </span>
+          <img
+            src="/doctor-nameplate.png"
+            alt="Prof. Muhammad Mohsin Gillani"
+            className="print-sheet-doctor-nameplate"
+          />
         </div>
       </header>
 
