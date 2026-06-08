@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
+import { shouldShowBasicChecklistPregnancy } from '../config/diseaseFlows';
 import { validateDiabetesChecklist } from '../utils/diabetesValidation';
 
 const EMPTY_CHECKLIST = {
@@ -34,6 +35,8 @@ export default function PatientDiseases() {
   const [selected, setSelected] = useState(null);
   const [checklist, setChecklist] = useState(EMPTY_CHECKLIST);
   const [patientName, setPatientName] = useState('');
+  const [patientGender, setPatientGender] = useState('');
+  const [checklistGender, setChecklistGender] = useState('');
   const [checklistError, setChecklistError] = useState('');
 
   const bmi = useMemo(
@@ -42,13 +45,23 @@ export default function PatientDiseases() {
   );
 
   useEffect(() => {
-    api.get(`/patients/${id}`).then(({ data }) => setPatientName(data.name));
+    api.get(`/patients/${id}`).then(({ data }) => {
+      setPatientName(data.name);
+      setPatientGender(data.gender);
+    });
     api.get(`/patients/${id}/diseases`).then(({ data }) => setDiseases(data));
   }, [id]);
 
   const openChecklist = async (disease) => {
-    setSelected(disease);
+    setChecklistError('');
+    const { data: patient } = await api.get(`/patients/${id}`);
+    const gender = patient.gender ?? '';
+    setPatientGender(gender);
+    setPatientName(patient.name);
+    setChecklistGender(gender);
+
     const { data } = await api.get(`/patients/diseases/${disease.id}/checklist`);
+    const showPregnancy = shouldShowBasicChecklistPregnancy(disease.disease, gender);
     if (data) {
       setChecklist({
         blood_pressure: data.blood_pressure ?? '',
@@ -62,17 +75,19 @@ export default function PatientDiseases() {
         ckd: !!data.ckd,
         ckd_stage: data.ckd_stage || '',
         dcld: !!data.dcld,
-        pregnancy: !!data.pregnancy,
-        pregnancy_stage: data.pregnancy_stage || '',
+        pregnancy: showPregnancy ? !!data.pregnancy : false,
+        pregnancy_stage: showPregnancy && data.pregnancy ? data.pregnancy_stage || '' : '',
         notes: data.notes ?? data.doctor_notes ?? '',
       });
     } else {
       setChecklist({ ...EMPTY_CHECKLIST });
     }
+    setSelected(disease);
   };
 
   const closeChecklist = () => {
     setSelected(null);
+    setChecklistGender('');
     setChecklist({ ...EMPTY_CHECKLIST });
     setChecklistError('');
   };
@@ -88,19 +103,23 @@ export default function PatientDiseases() {
 
   const saveChecklist = async () => {
     setChecklistError('');
+    const showPregnancy = shouldShowBasicChecklistPregnancy(selected.disease, checklistGender);
     const payload = {
       ...checklist,
       weight_kg: checklist.weight_kg === '' ? null : Number(checklist.weight_kg),
       height_m: checklist.height_m === '' ? null : Number(checklist.height_m),
       bmi: bmi === '' ? null : Number(bmi),
       ckd_stage: checklist.ckd ? checklist.ckd_stage || null : null,
-      pregnancy_stage: checklist.pregnancy ? checklist.pregnancy_stage || null : null,
+      pregnancy: showPregnancy ? !!checklist.pregnancy : false,
+      pregnancy_stage: showPregnancy && checklist.pregnancy
+        ? checklist.pregnancy_stage || null
+        : null,
     };
     if (selected.disease === 'Diabetes') {
       const err = validateDiabetesChecklist({
         ...payload,
         ckd: !!checklist.ckd,
-        pregnancy: !!checklist.pregnancy,
+        pregnancy: !!payload.pregnancy,
       });
       if (err) {
         setChecklistError(err);
@@ -110,11 +129,15 @@ export default function PatientDiseases() {
     await api.put(`/patients/diseases/${selected.id}/checklist`, payload);
     closeChecklist();
   };
+  const showPregnancyInChecklist = selected
+    ? shouldShowBasicChecklistPregnancy(selected.disease, checklistGender)
+    : false;
 
   return (
     <div>
       <div className="page-header">
         <h2>Diseases &mdash; {patientName}</h2>
+  
       </div>
 
       <div className="table-wrapper">
@@ -298,15 +321,17 @@ export default function PatientDiseases() {
                 />
                 <span>DCLD</span>
               </label>
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={checklist.pregnancy}
-                  onChange={e => updateField('pregnancy', e.target.checked)}
-                />
-                <span>Pregnancy</span>
-              </label>
-              {selected.disease === 'Diabetes' && checklist.pregnancy && (
+              {showPregnancyInChecklist && (
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={checklist.pregnancy}
+                    onChange={e => updateField('pregnancy', e.target.checked)}
+                  />
+                  <span>Pregnancy</span>
+                </label>
+              )}
+              {showPregnancyInChecklist && checklist.pregnancy && (
                 <div className="checklist-suboptions" role="group" aria-label="Pregnancy timing">
                   <label className="radio-row">
                     <input

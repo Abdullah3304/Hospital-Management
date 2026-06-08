@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
+import { isDiseaseAvailableForGender } from '../config/diseaseFlows';
 
 const DISEASES = ['Diabetes', 'Diabetic Foot', 'Laproscopic', 'Obesity', 'Neuropathic Pain', 'Stem Cell Therapy', 'Erectile Dysfunction'];
 
@@ -35,15 +36,22 @@ export default function PatientForm({ addDisease }) {
     });
   }, [id]);
 
-  const availableDiseases = isAddDisease
+  const baseDiseases = isAddDisease
     ? DISEASES.filter(d => !existingDiseases.includes(d))
     : isEdit
       ? DISEASES.filter(d => d === originalDisease || !existingDiseases.includes(d))
       : DISEASES;
+  const availableDiseases = baseDiseases.filter(d => isDiseaseAvailableForGender(d, form.gender));
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'mobile_number' && !/^\d*$/.test(value)) return;
+    if (name === 'gender') {
+      const next = { ...form, gender: value };
+      if (!isDiseaseAvailableForGender(next.disease, value)) next.disease = '';
+      setForm(next);
+      return;
+    }
     setForm({ ...form, [name]: value });
   };
 

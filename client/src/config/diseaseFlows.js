@@ -370,19 +370,33 @@ export const NeuropathicPain = {
 };
 
 export const ErectileDysfunction = {
-  steps: ['history', 'investigation', 'prescription'],
+  checklist: {
+    hidePregnancy: true,
+    maleOnly: true,
+  },
+  steps: ['history', 'investigation', 'treatmentPlan', 'prescription'],
   pageTitle: {
     history: 'HISTORY',
     investigation: 'PHYSICAL EXAMINATION',
+    treatmentPlan: 'TREATMENT PLAN',
     prescription: 'PRESCRIPTION',
   },
   history: [
+    {
+      type: 'select',
+      key: 'onset_type',
+      label: 'Onset Type',
+      options: ['Gradual', 'Sudden'],
+    },
+    { type: 'text', key: 'etiology', label: 'Etiology', readOnly: true },
     { type: 'select', key: 'morning_erection', label: 'Morning Erection', options: ['Yes', 'No'] },
+    { type: 'select', key: 'nocturnal_erection', label: 'Nocturnal Erection', options: ['Yes', 'No'] },
     { type: 'select', key: 'libido', label: 'Libido', options: ['High', 'Low'] },
     {
       type: 'checkbox',
       key: 'hypogonadism',
-      title: '',
+      title: 'HYPOGONADISM',
+      showWhen: { field: 'libido', equals: 'Low' },
       options: [{ key: 'hypogonadism', label: 'Hypogonadism' }],
     },
     {
@@ -409,15 +423,17 @@ export const ErectileDysfunction = {
         { key: 'ssris', label: 'SSRIs' },
         { key: 'beta_blockers', label: 'Beta-blockers' },
         { key: 'thiazides', label: 'Thiazides' },
-        { key: 'smoking', label: 'Smoking' },
-        { key: 'alcohol', label: 'Alcohol' },
       ],
     },
     {
-      type: 'select',
-      key: 'onset_type',
-      label: 'Onset Type',
-      options: ['Organic Etiology', 'Psychogenic Etiology'],
+      type: 'checkbox',
+      key: 'lifestyle',
+      title: 'LIFESTYLE',
+      options: [
+        { key: 'smoking', label: 'Smoking' },
+        { key: 'alcohol', label: 'Alcohol' },
+        { key: 'inactivity', label: 'Inactivity' },
+      ],
     },
   ],
   investigation: [
@@ -442,10 +458,146 @@ export const ErectileDysfunction = {
         { key: 'fasting_hba1c', label: 'Fasting/HbA1c' },
         { key: 'lipid_profile', label: 'Lipid Profile' },
         { key: 'serum_creatinine', label: 'Serum Creatinine' },
-        { key: 'morning_testosterone', label: 'Morning Testosterone' },
-        { key: 'lh_fsh_prolactin', label: 'LH/FSH/Prolactin' },
       ],
     },
+    {
+      type: 'select',
+      key: 'morning_testosterone_result',
+      label: 'Morning Total Testosterone (8-10 AM)',
+      options: ['Normal', 'Low'],
+    },
+   
+    
+    {
+      type: 'select',
+      key: 'cardiac_risk_level',
+      label: 'CARDIAC RISK LEVEL',
+      options: [
+        'Low Risk',
+        'Intermediate Risk',
+        'High Risk',
+      ],
+    },
+   
+    
+    {
+      type: 'checkbox',
+      key: 'diagnosis_category',
+      title: 'Clinical Diagnosis Categorization',
+      showWhen: { field: 'cardiac_risk_level', equals: 'Low Risk' },
+      options: [
+        { key: 'vasculogenic', label: 'Vasculogenic - Most Common' },
+        { key: 'diabetic', label: 'Diabetic' },
+        { key: 'neurogenic', label: 'Neurogenic' },
+        { key: 'hypogonadal', label: 'Hypogonadal' },
+        { key: 'psychogenic', label: 'Psychogenic' },
+      ],
+    },
+       {
+      type: 'select',
+      key: 'special_tests',
+      label: 'Special Tests ',
+      options: ['Yes', 'No'],
+    },
+    {
+      type: 'select',
+      key: 'testosterone_replacement',
+      label: 'Testosterone Replacement',
+      showWhen: [
+      
+        { field: 'diagnosis_category', equals: 'hypogonadal' },
+      ],
+      options: ['Not Indicated', 'Indicated'],
+    },
+    ],
+  treatmentPlan: [
+ 
+    {
+      type: 'staticGrid',
+      key: 'management_cards_First_Line',
+      title: 'FIRST-LINE MANAGEMENT',
+      cards: [
+        {
+          title: '1. Lifestyle & Risk Control',
+          body: `Weight Loss: Target >= 5-10%\nGlycemic Control: HbA1c <7%\nExercise: 150min/week\nStop Smoking\nTreat HTN & Dyslipidemia`,
+        },
+        {
+          title: '2. Optimize DM Medications',
+          body: `Prefer: SGLT2i (Jardiance/Farxiga), GLP-1 (Ozempic/Trulicity)`,
+        },
+        {
+          title: '3. PDE5 Inhibitors - First Line Drug',
+          body: `Sildenafil (Viagra): 50mg - Max 100mg\nTadalafil (Cialis): 10mg - Max 20mg (or 5mg daily)\nVardenafil (Levitra/Staxyn): 10mg - Max 20mg\nTake on empty stomach (Except Tadalafil)\nSexual Stimulation Required - Try >= 5-8 attempts before labeling failure\nCONTRAINDICATED WITH NITRATES`,
+        },
+      ],
+    },
+    {
+      type: 'textarea',
+      key: 'management_note_First_Line',
+      label: 'Additional Note',
+      
+    },
+    
+    {
+      type: 'staticGrid',
+      key: 'management_cards_Second_Line',
+      title: 'SECOND-LINEMANAGEMENT',
+      showWhen: { field: 'diagnosis_category', equals: 'hypogonadal' },
+      cards: [
+        {
+          title: '1. Vacuum Erection Devices (VED)',
+          body: `Safe,Effective for Diabetics`,
+        },
+         {
+          title: '2. Intracavernosal Injection (ICI) Therapy',
+          body: `Alprostadil(Caverject/Edex)\n Trimix:Alprostadil+ Papaverine + Phentolamine\n Highly Effective in Diabetic ED,`,
+        },
+        {
+          title: '3. Intraurethral Alprostadil (MUSE)',
+          body: 'less effective than ICI, but easier to use; may be considered if patient is averse to injections',
+        },
+      ],
+    },
+    {
+      type: 'textarea',
+      key: 'management_note_Second_Line',
+      label: 'Additional Note',
+      showWhen: { field: 'diagnosis_category', equals: 'hypogonadal' },
+    },
+    
+
+    {
+      type: 'staticGrid',
+      key: 'management_cards_Third_Line',
+      title: 'THIRD-LINE MANAGEMENT',
+            showWhen: { field: 'diagnosis_category', equals: 'hypogonadal' },
+
+      cards: [
+        {
+          title: '1. Penile Prosthesis Surgery',
+          body: `Inflatable (Preferred Malleable: Failure of medical therapy or severe organic ED)`,
+        },
+         {
+          title: '2. Adjuncts / Special Situations',
+          body: 'Psychosexual Therapy Performance\n Anxiety/Relationships \n Medication Review: Switch Beta-Blocker to Nebivolol (Bystolic)\n Avoid SSRIs if possible',
+        },
+        {
+          title: 'Combination Therapy:PDE5i + Testosterone\n PDE5i+ ICI',
+          body: 'Emerging - Not Routine: Low-intensity Shockwave (Li-ESWT)',
+        },
+        {
+          title: '4. Clinical Pearls',
+          body: 'ED= Early marker of CVD\n Diabetic patients often need higher PDE5 doses Poor response?\n Check:Low T,Severe Vascular Disease,Incorrect Use', 
+        }
+      ],
+    },
+    {
+      type: 'textarea',
+      key: 'management_note_Third_Line',
+      label: 'Additional Note',
+      showWhen: { field: 'diagnosis_category', equals: 'hypogonadal' },
+    },
+    
   ],
   prescription: [{ type: 'prescription', key: 'notes' }],
 };
@@ -460,7 +612,23 @@ const DISEASE_FLOWS = {
 };
 
 export function getDiseaseFlow(disease) {
-  return DISEASE_FLOWS[disease] || null;
+  const key = String(disease ?? '').trim();
+  return DISEASE_FLOWS[key] || null;
+}
+
+export function isFemaleGender(gender) {
+  return String(gender ?? '').trim().toLowerCase() === 'female';
+}
+
+export function isDiseaseAvailableForGender(disease, gender) {
+  const flow = getDiseaseFlow(disease);
+  if (flow?.checklist?.maleOnly === true && isFemaleGender(gender)) return false;
+  return true;
+}
+
+export function shouldShowBasicChecklistPregnancy(disease, gender) {
+  if (!isFemaleGender(gender)) return false;
+  return getDiseaseFlow(disease)?.checklist?.hidePregnancy !== true;
 }
 
 export default DISEASE_FLOWS;

@@ -10,6 +10,63 @@ import { isDiabetesIntensiveTreatmentPlan } from '../utils/diabetesIntensiveTrea
 
 const STEPS = ['history', 'investigation', 'treatmentPlan', 'prescription'];
 
+const ED_ONSET_ETIOLOGY = {
+  Gradual: 'Organic Etiology',
+  Sudden: 'Psychogenic Etiology',
+};
+
+function erectileDysfunctionEtiology(onsetType) {
+  return ED_ONSET_ETIOLOGY[onsetType] || '';
+}
+
+function normalizeErectileDysfunctionHistory(history) {
+  if (!history || typeof history !== 'object') return history;
+  const next = { ...history };
+  if (next.onset_type === 'Organic Etiology') {
+    next.onset_type = 'Gradual';
+    next.etiology = 'Organic Etiology';
+  } else if (next.onset_type === 'Psychogenic Etiology') {
+    next.onset_type = 'Sudden';
+    next.etiology = 'Psychogenic Etiology';
+  } else if (!next.etiology) {
+    next.etiology = erectileDysfunctionEtiology(next.onset_type);
+  }
+  if (Array.isArray(next.drugs)) {
+    const lifestyle = Array.isArray(next.lifestyle) ? [...next.lifestyle] : [];
+    ['smoking', 'alcohol'].forEach((key) => {
+      if (next.drugs.includes(key) && !lifestyle.includes(key)) lifestyle.push(key);
+    });
+    next.lifestyle = lifestyle;
+    next.drugs = next.drugs.filter(k => k !== 'smoking' && k !== 'alcohol');
+  }
+  if (next.libido !== 'Low') next.hypogonadism = [];
+  return next;
+}
+
+function isSectionVisible(section, stepData, allState) {
+  if (!section.showWhen) return true;
+
+  const conditions = Array.isArray(section.showWhen) ? section.showWhen : [section.showWhen];
+
+  const matchesCondition = (state, condition) => {
+    if (!state || typeof state !== 'object') return false;
+    const { field, equals } = condition;
+    const value = state[field];
+    if (Array.isArray(value)) {
+      if (Array.isArray(equals)) {
+        return equals.every(eq => value.includes(eq));
+      }
+      return value.includes(equals);
+    }
+    return value === equals;
+  };
+
+  return conditions.every((condition) => {
+    if (matchesCondition(stepData, condition)) return true;
+    return Object.values(allState || {}).some(valueSet => matchesCondition(valueSet, condition));
+  });
+}
+
 export default function DiseaseManagement() {
   const { id, diseaseId } = useParams();
   const navigate = useNavigate();
@@ -54,7 +111,10 @@ export default function DiseaseManagement() {
         setFlow(getDiseaseFlow(current.disease));
 
         if (assessment) {
-          setHistory(assessment.history || {});
+          const loadedHistory = current.disease === 'Erectile Dysfunction'
+            ? normalizeErectileDysfunctionHistory(assessment.history || {})
+            : (assessment.history || {});
+          setHistory(loadedHistory);
           setInvestigation(assessment.investigation || {});
           setTreatmentPlan(assessment.treatment_plan || {});
           setPrescription(assessment.prescription || {});
@@ -187,8 +247,17 @@ export default function DiseaseManagement() {
 
         {error && <div className="error-msg">{error}</div>}
 
+        {stepKey === 'prescription' && (
+          <PrescriptionDoctorRow prescription={prescription} setPrescription={setPrescription} />
+        )}
+
         <div className="management-card">
-          {stepKey === 'treatmentPlan' && intensiveDiabetesTreatmentPlan ? (
+          {stepKey === 'prescription' ? (
+            <PrescriptionField
+              value={prescription.notes}
+              onChange={val => setPrescription(prev => ({ ...prev, notes: val }))}
+            />
+          ) : stepKey === 'treatmentPlan' && intensiveDiabetesTreatmentPlan ? (
             <DiabetesIntensiveTreatmentPlan
               patientAge={patientAge}
               checklistRow={checklistRow}
@@ -197,7 +266,7 @@ export default function DiseaseManagement() {
               setTreatmentPlan={setTreatmentPlan}
             />
           ) : Array.isArray(sections) ? (
-            sections.map(section => (
+            sections.filter(section => isSectionVisible(section, stepData, { history, investigation, treatmentPlan, prescription })).map(section => (
             <Section
               key={section.key}
               section={section}
@@ -213,6 +282,18 @@ export default function DiseaseManagement() {
                   setHistory((h) => {
                     const n = { ...h, diabetes_specific_investigation: val };
                     if (Array.isArray(val) && !val.includes('hba1c')) n.hba1c_value = '';
+                    return n;
+                  });
+                } else if (disease?.disease === 'Erectile Dysfunction' && stepKey === 'history' && section.key === 'onset_type') {
+                  setHistory((h) => ({
+                    ...h,
+                    onset_type: val,
+                    etiology: erectileDysfunctionEtiology(val),
+                  }));
+                } else if (disease?.disease === 'Erectile Dysfunction' && stepKey === 'history' && section.key === 'libido') {
+                  setHistory((h) => {
+                    const n = { ...h, libido: val };
+                    if (val !== 'Low') n.hypogonadism = [];
                     return n;
                   });
                 } else {
@@ -285,6 +366,22 @@ export default function DiseaseManagement() {
 }
 
 function StaticSection({ section }) {
+  if (section.type === 'staticGrid') {
+    return (
+      <div className="management-section management-static-grid">
+        <h3 className="section-title">{section.title}</h3>
+        <div className="management-static-grid-row">
+          {section.cards.map(card => (
+            <div key={card.title} className="management-static-grid-card">
+              <h4>{card.title}</h4>
+              <div className="management-static-body">{card.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="management-section management-static-block">
       <h3 className="section-title">{section.title}</h3>
@@ -450,7 +547,7 @@ function sanitizeHbA1cNumericInput(raw) {
 }
 
 function Section({ section, value, onChange, diabetesIhd, hba1cFollowup }) {
-  if (section.type === 'static') {
+  if (section.type === 'static' || section.type === 'staticGrid') {
     return <StaticSection section={section} />;
   }
 
@@ -535,7 +632,8 @@ function Section({ section, value, onChange, diabetesIhd, hba1cFollowup }) {
           type="text"
           value={value || ''}
           onChange={e => onChange(e.target.value)}
-          placeholder={`Enter ${section.label.toLowerCase()}...`}
+          readOnly={!!section.readOnly}
+          placeholder={section.readOnly ? '' : `Enter ${section.label.toLowerCase()}...`}
         />
       </div>
     );
@@ -574,6 +672,37 @@ function Section({ section, value, onChange, diabetesIhd, hba1cFollowup }) {
   }
 
   return null;
+}
+
+function PrescriptionDoctorRow({ prescription, setPrescription }) {
+  return (
+    <div className="prescription-doctor-row">
+      <div className="form-group">
+        <label htmlFor="prescription-doctor-name">Doctor name:</label>
+        <input
+          id="prescription-doctor-name"
+          type="text"
+          value={prescription.override_doctor_name || ''}
+          onChange={e =>
+            setPrescription(prev => ({ ...prev, override_doctor_name: e.target.value }))
+          }
+          placeholder="Doctor name"
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="prescription-doctor-qualifications">Qualifications:</label>
+        <input
+          id="prescription-doctor-qualifications"
+          type="text"
+          value={prescription.override_doctor_qualifications || ''}
+          onChange={e =>
+            setPrescription(prev => ({ ...prev, override_doctor_qualifications: e.target.value }))
+          }
+          placeholder="Qualifications"
+        />
+      </div>
+    </div>
+  );
 }
 
 const BULLET = '• ';

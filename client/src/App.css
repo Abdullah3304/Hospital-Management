@@ -497,6 +497,67 @@ textarea {
   margin-bottom: 1.5rem;
 }
 
+.management-step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.management-step-row .step-indicator {
+  margin-bottom: 0;
+}
+
+.management-step-row:not(.management-step-row--with-doctor) .step-indicator {
+  flex: 1;
+}
+
+.management-step-row--with-doctor .step-indicator {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.prescription-doctor-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: end;
+  max-width: 900px;
+  margin: 0 auto 1.25rem;
+  padding: 0 0.25rem;
+}
+
+.prescription-doctor-row label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.prescription-doctor-row input {
+  width: 100%;
+  background: #fff;
+}
+
+.management-card .prescription-section {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.management-card .prescription-section textarea {
+  width: 100%;
+  min-height: 280px;
+  resize: vertical;
+}
+
+@media (max-width: 640px) {
+  .prescription-doctor-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .step-dot {
   width: 32px;
   height: 32px;
@@ -550,6 +611,45 @@ textarea {
   background: #f5f7fa;
   border-radius: 6px;
   border: 1px solid #e0e4ea;
+}
+
+.management-static-grid-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.management-static-grid-card {
+  background: #f8fbff;
+  border: 1px solid #dfe7ee;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.management-static-grid-card h4 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #1f4f8b;
+}
+
+.management-static-grid-card .management-static-body {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+@media (max-width: 960px) {
+  .management-static-grid-row {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 660px) {
+  .management-static-grid-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .bilateral-yesno-table,
@@ -740,7 +840,7 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    line-height: 0;
+    line-height: normal;
   }
 
   .print-sheet-doctor-nameplate {
@@ -752,6 +852,44 @@ textarea {
     display: block;
     object-fit: contain;
     object-position: right center;
+  }
+
+  .print-sheet-doctor-custom {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 420px;
+    min-width: 260px;
+    padding: 0.45rem 0.85rem 0.5rem;
+    border: 1px solid #b8b8b8;
+    border-radius: 14px;
+    text-align: center;
+    line-height: 1.3;
+    background: #fff;
+  }
+
+  .print-sheet-doctor-name {
+    display: block;
+    font-size: 14pt;
+    font-weight: 700;
+    font-family: Georgia, 'Times New Roman', serif;
+    color: #111;
+    margin: 0 0 0.3rem;
+    line-height: 1.2;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .print-sheet-doctor-qual {
+    display: block;
+    font-size: 7.5pt;
+    font-weight: 400;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #333;
+    margin: 0.08rem 0;
+    line-height: 1.3;
+    white-space: normal;
+    word-break: break-word;
   }
 
   .print-sheet-section {

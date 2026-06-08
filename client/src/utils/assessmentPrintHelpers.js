@@ -139,3 +139,21 @@ export function getPrescriptionNotes(prescription) {
   const raw = prescription.notes;
   return raw == null ? '' : String(raw);
 }
+
+function trimText(value) {
+  return value == null ? '' : String(value).trim();
+}
+
+/**
+ * Print header doctor: prescription override → default nameplate.
+ * @returns {{ type: 'default' } | { type: 'custom', name: string, qualifications: string }}
+ */
+export function getPrintDoctorHeader(_investigation, prescription) {
+  const overrideName = trimText(prescription?.override_doctor_name);
+  const overrideQual = trimText(prescription?.override_doctor_qualifications);
+  if (overrideName || overrideQual) {
+    return { type: 'custom', name: overrideName, qualifications: overrideQual };
+  }
+
+  return { type: 'default' };
+}
