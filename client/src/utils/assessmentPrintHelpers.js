@@ -144,9 +144,23 @@ function trimText(value) {
   return value == null ? '' : String(value).trim();
 }
 
+const DEFAULT_PRINT_DOCTOR = {
+  name: 'Prof Dr M. Mohsin Gillani',
+  qualifications: [
+    'Head of Department General Surgery & Surgical Oncology (GSSO)',
+    'Fellow of College of Physician & Surgeon (Pak)',
+    'Fellowship in Advanced Laparoscopic Obesity Surgery (BELGIUM)',
+    'Fellow of American College of Surgeon (USA)',
+    'Director Advance Laparoscopic Surgery Center (SMDC, LHR)',
+    'Director Scandinavian Obesity & Diabetes Clinic',
+    'Advance Laparoscopic Bariatric, Metabolic & Cancer Surgeon',
+    'Director ALCODS',
+  ].join('\n'),
+};
+
 /**
- * Print header doctor: prescription override → default nameplate.
- * @returns {{ type: 'default' } | { type: 'custom', name: string, qualifications: string }}
+ * Print header doctor: prescription override → default nameplate text.
+ * @returns {{ type: 'custom', name: string, qualifications: string }}
  */
 export function getPrintDoctorHeader(_investigation, prescription) {
   const overrideName = trimText(prescription?.override_doctor_name);
@@ -155,5 +169,9 @@ export function getPrintDoctorHeader(_investigation, prescription) {
     return { type: 'custom', name: overrideName, qualifications: overrideQual };
   }
 
-  return { type: 'default' };
+  return {
+    type: 'custom',
+    name: DEFAULT_PRINT_DOCTOR.name,
+    qualifications: DEFAULT_PRINT_DOCTOR.qualifications,
+  };
 }

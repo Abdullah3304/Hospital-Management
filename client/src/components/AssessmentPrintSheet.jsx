@@ -26,7 +26,7 @@ export default function AssessmentPrintSheet({
     [investigation, prescription],
   );
   const qualificationLines = useMemo(() => {
-    if (printDoctor.type !== 'custom' || !printDoctor.qualifications) return [];
+    if (!printDoctor.qualifications) return [];
     return printDoctor.qualifications
       .split('\n')
       .map(l => l.trim())
@@ -43,22 +43,14 @@ export default function AssessmentPrintSheet({
           <img src="/logo.png" alt="ALCODS" className="print-sheet-logo-alcods" />
         </div>
         <div className="print-sheet-doctor-slot">
-          {printDoctor.type === 'default' ? (
-            <img
-              src="/doctor-nameplate.png"
-              alt="Prof Dr M. Mohsin Gillani"
-              className="print-sheet-doctor-nameplate"
-            />
-          ) : (
-            <div className="print-sheet-doctor-custom">
-              {printDoctor.name && (
-                <div className="print-sheet-doctor-name">{printDoctor.name}</div>
-              )}
-              {qualificationLines.map((line, i) => (
-                <div key={`qual-${i}`} className="print-sheet-doctor-qual">{line}</div>
-              ))}
-            </div>
-          )}
+          <div className="print-sheet-doctor-custom">
+            {printDoctor.name && (
+              <div className="print-sheet-doctor-name">{printDoctor.name}</div>
+            )}
+            {qualificationLines.map((line, i) => (
+              <div key={`qual-${i}`} className="print-sheet-doctor-qual">{line}</div>
+            ))}
+          </div>
         </div>
       </header>
 
