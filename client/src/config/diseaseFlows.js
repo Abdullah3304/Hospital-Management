@@ -370,10 +370,15 @@ export const NeuropathicPain = {
 };
 
 export const ErectileDysfunction = {
-  steps: ['history', 'investigation', 'prescription'],
+  checklist: {
+    hidePregnancy: true,
+    maleOnly: true,
+  },
+  steps: ['history', 'investigation', 'treatmentPlan', 'prescription'],
   pageTitle: {
     history: 'HISTORY',
     investigation: 'PHYSICAL EXAMINATION',
+    treatmentPlan: 'TREATMENT PLAN',
     prescription: 'PRESCRIPTION',
   },
   history: [
@@ -384,12 +389,6 @@ export const ErectileDysfunction = {
       key: 'hypogonadism',
       title: '',
       options: [{ key: 'hypogonadism', label: 'Hypogonadism' }],
-    },
-    {
-      type: 'checkbox',
-      key: 'ejaculatory_function',
-      title: 'EJACULATORY FUNCTION',
-      options: [{ key: 'ejaculatory_function', label: 'Ejaculatory Function' }],
     },
     {
       type: 'checkbox',
@@ -446,6 +445,119 @@ export const ErectileDysfunction = {
         { key: 'lh_fsh_prolactin', label: 'LH/FSH/Prolactin' },
       ],
     },
+    {
+      type: 'select',
+      key: 'morning_testosterone_result',
+      label: 'Morning Total Testosterone',
+      options: ['Normal', 'Low'],
+    },
+    {
+      type: 'select',
+      key: 'cardiac_risk_level',
+      label: 'CARDIAC RISK LEVEL',
+      options: ['Low Risk', 'Intermediate Risk', 'High Risk'],
+    },
+    {
+      type: 'checkbox',
+      key: 'diagnosis_category',
+      title: '',
+      showWhen: { field: 'cardiac_risk_level', equals: 'Low Risk' },
+      options: [
+        { key: 'vasculogenic', label: 'Vasculogenic' },
+        { key: 'neurogenic', label: 'Neurogenic' },
+        { key: 'hypogonadal', label: 'Hypogonadal' },
+        { key: 'psychogenic', label: 'Psychogenic' },
+        { key: 'mixed', label: 'Mixed' },
+      ],
+    },
+  ],
+  treatmentPlan: [
+ 
+    {
+      type: 'staticGrid',
+      key: 'management_cards_First_Line',
+      title: 'FIRST-LINE MANAGEMENT',
+      cards: [
+        {
+          title: '1. Lifestyle & Risk Control',
+          body: `Weight Loss: Target >= 5-10%\nGlycemic Control: HbA1c <7%\nExercise: 150min/week\nStop Smoking\nTreat HTN & Dyslipidemia`,
+        },
+        {
+          title: '2. Optimize DM Medications',
+          body: `Prefer: SGLT2i (Jardiance/Farxiga), GLP-1 (Ozempic/Trulicity)`,
+        },
+        {
+          title: '3. PDE5 Inhibitors - First Line Drug',
+          body: `Sildenafil (Viagra): 50mg - Max 100mg\nTadalafil (Cialis): 10mg - Max 20mg (or 5mg daily)\nVardenafil (Levitra/Staxyn): 10mg - Max 20mg\nTake on empty stomach (Except Tadalafil)\nSexual Stimulation Required - Try >= 5-8 attempts before labeling failure\nCONTRAINDICATED WITH NITRATES`,
+        },
+      ],
+    },
+    {
+      type: 'textarea',
+      key: 'management_note_First_Line',
+      label: 'Additional Note',
+    },
+    {
+      type: 'sectionHeading',
+      key: 'heading_second_line',
+      title: 'Testosterone Replacement/Second line management Only if Hypogonadal:',
+    },
+    {
+      type: 'staticGrid',
+      key: 'management_cards_Second_Line',
+      cards: [
+        {
+          title: '1. Vacuum Erection Devices (VED)',
+          body: `Safe,Effective for Diabetics`,
+        },
+         {
+          title: '2. Intracavernosal Injection (ICI) Therapy',
+          body: `Alprostadil(Caverject/Edex)\n Trimix:Alprostadil+ Papaverine + Phentolamine\n Highly Effective in Diabetic ED,`,
+        },
+        {
+          title: '3. Intraurethral Alprostadil (MUSE)',
+          body: 'less effective than ICI, but easier to use; may be considered if patient is averse to injections',
+        },
+      ],
+    },
+    {
+      type: 'textarea',
+      key: 'management_note_Second_Line',
+      label: 'Additional Note',
+    },
+    {
+      type: 'sectionHeading',
+      key: 'heading_third_line',
+      title: 'THIRD-LINE MANAGEMENT',
+    },
+    {
+      type: 'staticGrid',
+      key: 'management_cards_Third_Line',
+      cards: [
+        {
+          title: '1. Penile Prosthesis Surgery',
+          body: `Inflatable (Preferred Malleable: Failure of medical therapy or severe organic ED)`,
+        },
+         {
+          title: '2. Adjuncts / Special Situations',
+          body: 'Psychosexual Therapy Performance\n Anxiety/Relationships \n Medication Review: Switch Beta-Blocker to Nebivolol (Bystolic)\n Avoid SSRIs if possible',
+        },
+        {
+          title: 'Combination Therapy:PDE5i + Testosterone\n PDE5i+ ICI',
+          body: 'Emerging - Not Routine: Low-intensity Shockwave (Li-ESWT)',
+        },
+        {
+          title: '4. Clinical Pearls',
+          body: 'ED= Early marker of CVD\n Diabetic patients often need higher PDE5 doses Poor response?\n Check:Low T,Severe Vascular Disease,Incorrect Use', 
+        }
+      ],
+    },
+    {
+      type: 'textarea',
+      key: 'management_note_Third_Line',
+      label: 'Additional Note',
+    },
+    
   ],
   prescription: [{ type: 'prescription', key: 'notes' }],
 };
@@ -459,8 +571,33 @@ const DISEASE_FLOWS = {
   'Erectile Dysfunction': ErectileDysfunction,
 };
 
+export function getFlowActiveSteps(flow, diseaseName, investigation) {
+  const steps = flow?.steps || [];
+  if (diseaseName === 'Erectile Dysfunction') {
+    if (investigation?.cardiac_risk_level === 'Low Risk') return steps;
+    return steps.filter(s => s !== 'treatmentPlan');
+  }
+  return steps;
+}
+
 export function getDiseaseFlow(disease) {
-  return DISEASE_FLOWS[disease] || null;
+  const key = String(disease ?? '').trim();
+  return DISEASE_FLOWS[key] || null;
+}
+
+export function isFemaleGender(gender) {
+  return String(gender ?? '').trim().toLowerCase() === 'female';
+}
+
+export function isDiseaseAvailableForGender(disease, gender) {
+  const flow = getDiseaseFlow(disease);
+  if (flow?.checklist?.maleOnly === true && isFemaleGender(gender)) return false;
+  return true;
+}
+
+export function shouldShowBasicChecklistPregnancy(disease, gender) {
+  if (!isFemaleGender(gender)) return false;
+  return getDiseaseFlow(disease)?.checklist?.hidePregnancy !== true;
 }
 
 export default DISEASE_FLOWS;

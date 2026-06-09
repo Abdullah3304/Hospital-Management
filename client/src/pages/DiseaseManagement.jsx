@@ -3,12 +3,36 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import AssessmentPrintSheet from '../components/AssessmentPrintSheet';
 import DiabetesIntensiveTreatmentPlan from '../components/DiabetesIntensiveTreatmentPlan';
-import { getDiseaseFlow } from '../config/diseaseFlows';
+import { getDiseaseFlow, getFlowActiveSteps } from '../config/diseaseFlows';
 import { printAssessmentSheet } from '../utils/printAssessment';
 import { validateDiabetesChecklist, validateDiabetesHistory } from '../utils/diabetesValidation';
 import { isDiabetesIntensiveTreatmentPlan } from '../utils/diabetesIntensiveTreatmentPlan';
 
 const STEPS = ['history', 'investigation', 'treatmentPlan', 'prescription'];
+
+function isSectionVisible(section, stepData, allState) {
+  if (!section.showWhen) return true;
+
+  const conditions = Array.isArray(section.showWhen) ? section.showWhen : [section.showWhen];
+
+  const matchesCondition = (state, condition) => {
+    if (!state || typeof state !== 'object') return false;
+    const { field, equals } = condition;
+    const value = state[field];
+    if (Array.isArray(value)) {
+      if (Array.isArray(equals)) {
+        return equals.every(eq => value.includes(eq));
+      }
+      return value.includes(equals);
+    }
+    return value === equals;
+  };
+
+  return conditions.every((condition) => {
+    if (matchesCondition(stepData, condition)) return true;
+    return Object.values(allState || {}).some(valueSet => matchesCondition(valueSet, condition));
+  });
+}
 
 export default function DiseaseManagement() {
   const { id, diseaseId } = useParams();
@@ -96,6 +120,17 @@ export default function DiseaseManagement() {
     [disease?.disease, history],
   );
 
+  const activeSteps = useMemo(
+    () => getFlowActiveSteps(flow, disease?.disease, investigation),
+    [flow, disease?.disease, investigation?.cardiac_risk_level],
+  );
+
+  useEffect(() => {
+    if (step >= activeSteps.length) {
+      setStep(Math.max(0, activeSteps.length - 1));
+    }
+  }, [activeSteps, step]);
+
   const handleSubmit = async () => {
     if (disease?.disease === 'Diabetes') {
       const checklistErr = validateDiabetesChecklist(checklistRow);
@@ -153,7 +188,6 @@ export default function DiseaseManagement() {
     return null;
   }
 
-  const activeSteps = flow.steps || STEPS;
   const stepKey = activeSteps[step];
   const sections = flow[stepKey];
   const title = flow.pageTitle?.[stepKey] || stepKey.toUpperCase();
@@ -187,8 +221,17 @@ export default function DiseaseManagement() {
 
         {error && <div className="error-msg">{error}</div>}
 
+        {stepKey === 'prescription' && (
+          <PrescriptionDoctorRow prescription={prescription} setPrescription={setPrescription} />
+        )}
+
         <div className="management-card">
-          {stepKey === 'treatmentPlan' && intensiveDiabetesTreatmentPlan ? (
+          {stepKey === 'prescription' ? (
+            <PrescriptionField
+              value={prescription.notes}
+              onChange={val => setPrescription(prev => ({ ...prev, notes: val }))}
+            />
+          ) : stepKey === 'treatmentPlan' && intensiveDiabetesTreatmentPlan ? (
             <DiabetesIntensiveTreatmentPlan
               patientAge={patientAge}
               checklistRow={checklistRow}
@@ -197,7 +240,7 @@ export default function DiseaseManagement() {
               setTreatmentPlan={setTreatmentPlan}
             />
           ) : Array.isArray(sections) ? (
-            sections.map(section => (
+            sections.filter(section => isSectionVisible(section, stepData, { history, investigation, treatmentPlan, prescription })).map(section => (
             <Section
               key={section.key}
               section={section}
@@ -285,6 +328,22 @@ export default function DiseaseManagement() {
 }
 
 function StaticSection({ section }) {
+  if (section.type === 'staticGrid') {
+    return (
+      <div className="management-section management-static-grid">
+        {section.title && <h3 className="section-title">{section.title}</h3>}
+        <div className="management-static-grid-row">
+          {section.cards.map(card => (
+            <div key={card.title} className="management-static-grid-card">
+              <h4>{card.title}</h4>
+              <div className="management-static-body">{card.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="management-section management-static-block">
       <h3 className="section-title">{section.title}</h3>
@@ -450,7 +509,15 @@ function sanitizeHbA1cNumericInput(raw) {
 }
 
 function Section({ section, value, onChange, diabetesIhd, hba1cFollowup }) {
-  if (section.type === 'static') {
+  if (section.type === 'sectionHeading') {
+    return (
+      <div className="management-section management-section-heading">
+        <h3 className="section-title">{section.title}</h3>
+      </div>
+    );
+  }
+
+  if (section.type === 'static' || section.type === 'staticGrid') {
     return <StaticSection section={section} />;
   }
 
@@ -469,7 +536,7 @@ function Section({ section, value, onChange, diabetesIhd, hba1cFollowup }) {
     };
     return (
       <div className="management-section">
-        <h3 className="section-title">{section.title}</h3>
+        {section.title?.trim() && <h3 className="section-title">{section.title}</h3>}
         <div className="checkbox-grid">
           {section.options.map(opt => (
             <label key={opt.key} className="checkbox-row">
@@ -535,7 +602,8 @@ function Section({ section, value, onChange, diabetesIhd, hba1cFollowup }) {
           type="text"
           value={value || ''}
           onChange={e => onChange(e.target.value)}
-          placeholder={`Enter ${section.label.toLowerCase()}...`}
+          readOnly={!!section.readOnly}
+          placeholder={section.readOnly ? '' : `Enter ${section.label.toLowerCase()}...`}
         />
       </div>
     );
@@ -574,6 +642,37 @@ function Section({ section, value, onChange, diabetesIhd, hba1cFollowup }) {
   }
 
   return null;
+}
+
+function PrescriptionDoctorRow({ prescription, setPrescription }) {
+  return (
+    <div className="prescription-doctor-row">
+      <div className="form-group">
+        <label htmlFor="prescription-doctor-name">Doctor name:</label>
+        <input
+          id="prescription-doctor-name"
+          type="text"
+          value={prescription.override_doctor_name || ''}
+          onChange={e =>
+            setPrescription(prev => ({ ...prev, override_doctor_name: e.target.value }))
+          }
+          placeholder="Doctor name"
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="prescription-doctor-qualifications">Qualifications:</label>
+        <input
+          id="prescription-doctor-qualifications"
+          type="text"
+          value={prescription.override_doctor_qualifications || ''}
+          onChange={e =>
+            setPrescription(prev => ({ ...prev, override_doctor_qualifications: e.target.value }))
+          }
+          placeholder="Qualifications"
+        />
+      </div>
+    </div>
+  );
 }
 
 const BULLET = '• ';

@@ -3,6 +3,7 @@ import {
   getFilledChecklistEntries,
   getFilledFlowStepSections,
   getPrescriptionNotes,
+  getPrintDoctorHeader,
 } from '../utils/assessmentPrintHelpers';
 
 export default function AssessmentPrintSheet({
@@ -20,6 +21,17 @@ export default function AssessmentPrintSheet({
     [flow, investigation],
   );
   const prescriptionText = useMemo(() => getPrescriptionNotes(prescription), [prescription]);
+  const printDoctor = useMemo(
+    () => getPrintDoctorHeader(investigation, prescription),
+    [investigation, prescription],
+  );
+  const qualificationLines = useMemo(() => {
+    if (printDoctor.type !== 'custom' || !printDoctor.qualifications) return [];
+    return printDoctor.qualifications
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean);
+  }, [printDoctor]);
 
   const investigationTitle =
     flow?.pageTitle?.investigation?.split('\n')[0] || 'Investigation';
@@ -31,9 +43,22 @@ export default function AssessmentPrintSheet({
           <img src="/logo.png" alt="ALCODS" className="print-sheet-logo-alcods" />
         </div>
         <div className="print-sheet-doctor-slot">
-          <span className="print-sheet-doctor-slot-label">
-            Doctor / practice logo and details — add asset later
-          </span>
+          {printDoctor.type === 'default' ? (
+            <img
+              src="/doctor-nameplate.png"
+              alt="Prof Dr M. Mohsin Gillani"
+              className="print-sheet-doctor-nameplate"
+            />
+          ) : (
+            <div className="print-sheet-doctor-custom">
+              {printDoctor.name && (
+                <div className="print-sheet-doctor-name">{printDoctor.name}</div>
+              )}
+              {qualificationLines.map((line, i) => (
+                <div key={`qual-${i}`} className="print-sheet-doctor-qual">{line}</div>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
