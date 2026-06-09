@@ -640,6 +640,16 @@ textarea {
   padding: 0;
 }
 
+.management-section-heading {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e0e4ea;
+}
+
+.management-section-heading .section-title {
+  margin-bottom: 0;
+}
+
 @media (max-width: 960px) {
   .management-static-grid-row {
     grid-template-columns: repeat(2, minmax(220px, 1fr));
@@ -974,10 +984,7 @@ textarea {
   }
 
   .print-sheet-prescription-body {
-    border: 1px solid #bbb;
-    border-radius: 4px;
-    padding: 0.5rem 0.65rem;
-    background: #fafafa;
+    padding: 0;
     width: 100%;
     box-sizing: border-box;
   }

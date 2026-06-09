@@ -382,28 +382,13 @@ export const ErectileDysfunction = {
     prescription: 'PRESCRIPTION',
   },
   history: [
-    {
-      type: 'select',
-      key: 'onset_type',
-      label: 'Onset Type',
-      options: ['Gradual', 'Sudden'],
-    },
-    { type: 'text', key: 'etiology', label: 'Etiology', readOnly: true },
     { type: 'select', key: 'morning_erection', label: 'Morning Erection', options: ['Yes', 'No'] },
-    { type: 'select', key: 'nocturnal_erection', label: 'Nocturnal Erection', options: ['Yes', 'No'] },
     { type: 'select', key: 'libido', label: 'Libido', options: ['High', 'Low'] },
     {
       type: 'checkbox',
       key: 'hypogonadism',
-      title: 'HYPOGONADISM',
-      showWhen: { field: 'libido', equals: 'Low' },
+      title: '',
       options: [{ key: 'hypogonadism', label: 'Hypogonadism' }],
-    },
-    {
-      type: 'checkbox',
-      key: 'ejaculatory_function',
-      title: 'EJACULATORY FUNCTION',
-      options: [{ key: 'ejaculatory_function', label: 'Ejaculatory Function' }],
     },
     {
       type: 'checkbox',
@@ -423,17 +408,15 @@ export const ErectileDysfunction = {
         { key: 'ssris', label: 'SSRIs' },
         { key: 'beta_blockers', label: 'Beta-blockers' },
         { key: 'thiazides', label: 'Thiazides' },
+        { key: 'smoking', label: 'Smoking' },
+        { key: 'alcohol', label: 'Alcohol' },
       ],
     },
     {
-      type: 'checkbox',
-      key: 'lifestyle',
-      title: 'LIFESTYLE',
-      options: [
-        { key: 'smoking', label: 'Smoking' },
-        { key: 'alcohol', label: 'Alcohol' },
-        { key: 'inactivity', label: 'Inactivity' },
-      ],
+      type: 'select',
+      key: 'onset_type',
+      label: 'Onset Type',
+      options: ['Organic Etiology', 'Psychogenic Etiology'],
     },
   ],
   investigation: [
@@ -458,58 +441,36 @@ export const ErectileDysfunction = {
         { key: 'fasting_hba1c', label: 'Fasting/HbA1c' },
         { key: 'lipid_profile', label: 'Lipid Profile' },
         { key: 'serum_creatinine', label: 'Serum Creatinine' },
+        { key: 'morning_testosterone', label: 'Morning Testosterone' },
+        { key: 'lh_fsh_prolactin', label: 'LH/FSH/Prolactin' },
       ],
     },
     {
       type: 'select',
       key: 'morning_testosterone_result',
-      label: 'Morning Total Testosterone (8-10 AM)',
+      label: 'Morning Total Testosterone',
       options: ['Normal', 'Low'],
     },
-   
-    
     {
       type: 'select',
       key: 'cardiac_risk_level',
       label: 'CARDIAC RISK LEVEL',
-      options: [
-        'Low Risk',
-        'Intermediate Risk',
-        'High Risk',
-      ],
+      options: ['Low Risk', 'Intermediate Risk', 'High Risk'],
     },
-   
-    
     {
       type: 'checkbox',
       key: 'diagnosis_category',
-      title: 'Clinical Diagnosis Categorization',
+      title: '',
       showWhen: { field: 'cardiac_risk_level', equals: 'Low Risk' },
       options: [
-        { key: 'vasculogenic', label: 'Vasculogenic - Most Common' },
-        { key: 'diabetic', label: 'Diabetic' },
+        { key: 'vasculogenic', label: 'Vasculogenic' },
         { key: 'neurogenic', label: 'Neurogenic' },
         { key: 'hypogonadal', label: 'Hypogonadal' },
         { key: 'psychogenic', label: 'Psychogenic' },
+        { key: 'mixed', label: 'Mixed' },
       ],
     },
-       {
-      type: 'select',
-      key: 'special_tests',
-      label: 'Special Tests ',
-      options: ['Yes', 'No'],
-    },
-    {
-      type: 'select',
-      key: 'testosterone_replacement',
-      label: 'Testosterone Replacement',
-      showWhen: [
-      
-        { field: 'diagnosis_category', equals: 'hypogonadal' },
-      ],
-      options: ['Not Indicated', 'Indicated'],
-    },
-    ],
+  ],
   treatmentPlan: [
  
     {
@@ -535,14 +496,15 @@ export const ErectileDysfunction = {
       type: 'textarea',
       key: 'management_note_First_Line',
       label: 'Additional Note',
-      
     },
-    
+    {
+      type: 'sectionHeading',
+      key: 'heading_second_line',
+      title: 'Testosterone Replacement/Second line management Only if Hypogonadal:',
+    },
     {
       type: 'staticGrid',
       key: 'management_cards_Second_Line',
-      title: 'SECOND-LINEMANAGEMENT',
-      showWhen: { field: 'diagnosis_category', equals: 'hypogonadal' },
       cards: [
         {
           title: '1. Vacuum Erection Devices (VED)',
@@ -562,16 +524,15 @@ export const ErectileDysfunction = {
       type: 'textarea',
       key: 'management_note_Second_Line',
       label: 'Additional Note',
-      showWhen: { field: 'diagnosis_category', equals: 'hypogonadal' },
     },
-    
-
+    {
+      type: 'sectionHeading',
+      key: 'heading_third_line',
+      title: 'THIRD-LINE MANAGEMENT',
+    },
     {
       type: 'staticGrid',
       key: 'management_cards_Third_Line',
-      title: 'THIRD-LINE MANAGEMENT',
-            showWhen: { field: 'diagnosis_category', equals: 'hypogonadal' },
-
       cards: [
         {
           title: '1. Penile Prosthesis Surgery',
@@ -595,7 +556,6 @@ export const ErectileDysfunction = {
       type: 'textarea',
       key: 'management_note_Third_Line',
       label: 'Additional Note',
-      showWhen: { field: 'diagnosis_category', equals: 'hypogonadal' },
     },
     
   ],
@@ -610,6 +570,15 @@ const DISEASE_FLOWS = {
   'Neuropathic Pain': NeuropathicPain,
   'Erectile Dysfunction': ErectileDysfunction,
 };
+
+export function getFlowActiveSteps(flow, diseaseName, investigation) {
+  const steps = flow?.steps || [];
+  if (diseaseName === 'Erectile Dysfunction') {
+    if (investigation?.cardiac_risk_level === 'Low Risk') return steps;
+    return steps.filter(s => s !== 'treatmentPlan');
+  }
+  return steps;
+}
 
 export function getDiseaseFlow(disease) {
   const key = String(disease ?? '').trim();

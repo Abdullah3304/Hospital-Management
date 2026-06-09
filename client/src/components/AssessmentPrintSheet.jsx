@@ -45,7 +45,7 @@ export default function AssessmentPrintSheet({
         <div className="print-sheet-doctor-slot">
           {printDoctor.type === 'default' ? (
             <img
-              src="/name-plate.png"
+              src="/doctor-nameplate.png"
               alt="Prof Dr M. Mohsin Gillani"
               className="print-sheet-doctor-nameplate"
             />

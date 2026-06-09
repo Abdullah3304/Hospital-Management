@@ -3,45 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import AssessmentPrintSheet from '../components/AssessmentPrintSheet';
 import DiabetesIntensiveTreatmentPlan from '../components/DiabetesIntensiveTreatmentPlan';
-import { getDiseaseFlow } from '../config/diseaseFlows';
+import { getDiseaseFlow, getFlowActiveSteps } from '../config/diseaseFlows';
 import { printAssessmentSheet } from '../utils/printAssessment';
 import { validateDiabetesChecklist, validateDiabetesHistory } from '../utils/diabetesValidation';
 import { isDiabetesIntensiveTreatmentPlan } from '../utils/diabetesIntensiveTreatmentPlan';
 
 const STEPS = ['history', 'investigation', 'treatmentPlan', 'prescription'];
-
-const ED_ONSET_ETIOLOGY = {
-  Gradual: 'Organic Etiology',
-  Sudden: 'Psychogenic Etiology',
-};
-
-function erectileDysfunctionEtiology(onsetType) {
-  return ED_ONSET_ETIOLOGY[onsetType] || '';
-}
-
-function normalizeErectileDysfunctionHistory(history) {
-  if (!history || typeof history !== 'object') return history;
-  const next = { ...history };
-  if (next.onset_type === 'Organic Etiology') {
-    next.onset_type = 'Gradual';
-    next.etiology = 'Organic Etiology';
-  } else if (next.onset_type === 'Psychogenic Etiology') {
-    next.onset_type = 'Sudden';
-    next.etiology = 'Psychogenic Etiology';
-  } else if (!next.etiology) {
-    next.etiology = erectileDysfunctionEtiology(next.onset_type);
-  }
-  if (Array.isArray(next.drugs)) {
-    const lifestyle = Array.isArray(next.lifestyle) ? [...next.lifestyle] : [];
-    ['smoking', 'alcohol'].forEach((key) => {
-      if (next.drugs.includes(key) && !lifestyle.includes(key)) lifestyle.push(key);
-    });
-    next.lifestyle = lifestyle;
-    next.drugs = next.drugs.filter(k => k !== 'smoking' && k !== 'alcohol');
-  }
-  if (next.libido !== 'Low') next.hypogonadism = [];
-  return next;
-}
 
 function isSectionVisible(section, stepData, allState) {
   if (!section.showWhen) return true;
@@ -111,10 +78,7 @@ export default function DiseaseManagement() {
         setFlow(getDiseaseFlow(current.disease));
 
         if (assessment) {
-          const loadedHistory = current.disease === 'Erectile Dysfunction'
-            ? normalizeErectileDysfunctionHistory(assessment.history || {})
-            : (assessment.history || {});
-          setHistory(loadedHistory);
+          setHistory(assessment.history || {});
           setInvestigation(assessment.investigation || {});
           setTreatmentPlan(assessment.treatment_plan || {});
           setPrescription(assessment.prescription || {});
@@ -155,6 +119,17 @@ export default function DiseaseManagement() {
     () => disease?.disease === 'Diabetes' && isDiabetesIntensiveTreatmentPlan(history),
     [disease?.disease, history],
   );
+
+  const activeSteps = useMemo(
+    () => getFlowActiveSteps(flow, disease?.disease, investigation),
+    [flow, disease?.disease, investigation?.cardiac_risk_level],
+  );
+
+  useEffect(() => {
+    if (step >= activeSteps.length) {
+      setStep(Math.max(0, activeSteps.length - 1));
+    }
+  }, [activeSteps, step]);
 
   const handleSubmit = async () => {
     if (disease?.disease === 'Diabetes') {
@@ -213,7 +188,6 @@ export default function DiseaseManagement() {
     return null;
   }
 
-  const activeSteps = flow.steps || STEPS;
   const stepKey = activeSteps[step];
   const sections = flow[stepKey];
   const title = flow.pageTitle?.[stepKey] || stepKey.toUpperCase();
@@ -282,18 +256,6 @@ export default function DiseaseManagement() {
                   setHistory((h) => {
                     const n = { ...h, diabetes_specific_investigation: val };
                     if (Array.isArray(val) && !val.includes('hba1c')) n.hba1c_value = '';
-                    return n;
-                  });
-                } else if (disease?.disease === 'Erectile Dysfunction' && stepKey === 'history' && section.key === 'onset_type') {
-                  setHistory((h) => ({
-                    ...h,
-                    onset_type: val,
-                    etiology: erectileDysfunctionEtiology(val),
-                  }));
-                } else if (disease?.disease === 'Erectile Dysfunction' && stepKey === 'history' && section.key === 'libido') {
-                  setHistory((h) => {
-                    const n = { ...h, libido: val };
-                    if (val !== 'Low') n.hypogonadism = [];
                     return n;
                   });
                 } else {
@@ -369,7 +331,7 @@ function StaticSection({ section }) {
   if (section.type === 'staticGrid') {
     return (
       <div className="management-section management-static-grid">
-        <h3 className="section-title">{section.title}</h3>
+        {section.title && <h3 className="section-title">{section.title}</h3>}
         <div className="management-static-grid-row">
           {section.cards.map(card => (
             <div key={card.title} className="management-static-grid-card">
@@ -547,6 +509,14 @@ function sanitizeHbA1cNumericInput(raw) {
 }
 
 function Section({ section, value, onChange, diabetesIhd, hba1cFollowup }) {
+  if (section.type === 'sectionHeading') {
+    return (
+      <div className="management-section management-section-heading">
+        <h3 className="section-title">{section.title}</h3>
+      </div>
+    );
+  }
+
   if (section.type === 'static' || section.type === 'staticGrid') {
     return <StaticSection section={section} />;
   }
@@ -566,7 +536,7 @@ function Section({ section, value, onChange, diabetesIhd, hba1cFollowup }) {
     };
     return (
       <div className="management-section">
-        <h3 className="section-title">{section.title}</h3>
+        {section.title?.trim() && <h3 className="section-title">{section.title}</h3>}
         <div className="checkbox-grid">
           {section.options.map(opt => (
             <label key={opt.key} className="checkbox-row">
