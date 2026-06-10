@@ -572,7 +572,8 @@ const DISEASE_FLOWS = {
 };
 
 export function getFlowActiveSteps(flow, diseaseName, investigation) {
-  const steps = flow?.steps || [];
+  const defaultSteps = ['history', 'investigation', 'treatmentPlan', 'prescription'];
+  const steps = flow?.steps || defaultSteps;
   if (diseaseName === 'Erectile Dysfunction') {
     if (investigation?.cardiac_risk_level === 'Low Risk') return steps;
     return steps.filter(s => s !== 'treatmentPlan');
