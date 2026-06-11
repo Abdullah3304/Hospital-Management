@@ -11,6 +11,7 @@ const EMPTY_CHECKLIST = {
   respiratory_rate: '',
   weight_kg: '',
   height_m: '',
+  height_unit: 'ftin',
   chronic_diseases: '',
   stroke: false,
   ckd: false,
@@ -26,6 +27,20 @@ function computeBmi(weightKg, heightM) {
   const h = parseFloat(heightM);
   if (!w || !h || h <= 0) return '';
   return (w / (h * h)).toFixed(2);
+}
+
+function metersToFeetInches(m) {
+  const totalInches = (Number(m) || 0) * 39.37007874;
+  const ft = Math.floor(totalInches / 12);
+  const inches = Math.round(totalInches - ft * 12);
+  return { ft: String(ft), inches: String(inches) };
+}
+
+function feetInchesToMeters(ft, inches) {
+  const f = Number(ft) || 0;
+  const i = Number(inches) || 0;
+  const totalInches = f * 12 + i;
+  return String(totalInches * 0.0254);
 }
 
 export default function PatientDiseases() {
@@ -70,6 +85,7 @@ export default function PatientDiseases() {
         respiratory_rate: data.respiratory_rate ?? '',
         weight_kg: data.weight_kg != null ? String(data.weight_kg) : '',
         height_m: data.height_m != null ? String(data.height_m) : '',
+        height_unit: 'ftin',
         chronic_diseases: data.chronic_diseases ?? '',
         stroke: !!data.stroke,
         ckd: !!data.ckd,
@@ -104,8 +120,9 @@ export default function PatientDiseases() {
   const saveChecklist = async () => {
     setChecklistError('');
     const showPregnancy = shouldShowBasicChecklistPregnancy(selected.disease, checklistGender);
+    const { height_unit, ...checklistRest } = checklist;
     const payload = {
-      ...checklist,
+      ...checklistRest,
       weight_kg: checklist.weight_kg === '' ? null : Number(checklist.weight_kg),
       height_m: checklist.height_m === '' ? null : Number(checklist.height_m),
       bmi: bmi === '' ? null : Number(bmi),
@@ -132,6 +149,12 @@ export default function PatientDiseases() {
   const showPregnancyInChecklist = selected
     ? shouldShowBasicChecklistPregnancy(selected.disease, checklistGender)
     : false;
+
+  // Prepare height display values based on selected unit
+  const heightMeters = checklist.height_m === '' ? '' : Number(checklist.height_m);
+  const heightDisplayCm = heightMeters === '' ? '' : String((heightMeters * 100).toFixed(2));
+  const { ft: heightFtDefault, inches: heightInDefault } = metersToFeetInches(heightMeters);
+
 
   return (
     <div>
@@ -244,14 +267,51 @@ export default function PatientDiseases() {
                   {selected.disease === 'Diabetes' && <span className="label-required"> *</span>}
                 </label>
                 <div className="input-with-unit">
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={checklist.height_m}
-                    onChange={e => updateField('height_m', e.target.value)}
-                  />
-                  <span className="input-unit">meters</span>
+                  {checklist.height_unit === 'ftin' ? (
+                    <>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={heightFtDefault}
+                        onChange={e => updateField('height_m', feetInchesToMeters(e.target.value, heightInDefault || '0'))}
+                        style={{ width: '5rem', marginRight: '0.5rem' }}
+                      />
+                      <span style={{ marginRight: '0.75rem' }}>ft</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={heightInDefault}
+                        onChange={e => updateField('height_m', feetInchesToMeters(heightFtDefault || '0', e.target.value))}
+                        style={{ width: '5rem', marginRight: '0.5rem' }}
+                      />
+                      <span>in</span>
+                    </>
+                  ) : (
+                    <>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={heightDisplayCm}
+                        onChange={e => {
+                          const v = e.target.value;
+                          updateField('height_m', v === '' ? '' : String(Number(v) / 100));
+                        }}
+                      />
+                      <span className="input-unit">cm</span>
+                    </>
+                  )}
+
+                  <select
+                    value={checklist.height_unit}
+                    onChange={e => updateField('height_unit', e.target.value)}
+                    style={{ marginLeft: '0.75rem' }}
+                  >
+                    <option value="cm">cm</option>
+                    <option value="ftin">ft</option>
+                  </select>
                 </div>
               </div>
               <div className="form-group">
