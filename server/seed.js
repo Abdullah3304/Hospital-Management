@@ -105,15 +105,21 @@ async function seed() {
     await client.query(`DROP TRIGGER IF EXISTS treatment_assessments_updated_at ON treatment_assessments`);
     await client.query(`CREATE TRIGGER treatment_assessments_updated_at BEFORE UPDATE ON treatment_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
 
-    const adminHash = await bcrypt.hash('admin123', 10);
+    const adminHash = await bcrypt.hash('!q#3Xv9$LmZ2&p@L', 10);
     await client.query(
-      `INSERT INTO users (username, password) VALUES ('admin', $1) ON CONFLICT (username) DO NOTHING`,
+      `INSERT INTO users (username, password) VALUES ('admin.alcods', $1) ON CONFLICT (username) DO NOTHING`,
       [adminHash]
     );
 
-    const doctorHash = await bcrypt.hash('doctor123', 10);
+    const mohsinHash = await bcrypt.hash('!q#3Xv9$LmZ2&p@L', 10);
     await client.query(
-      `INSERT INTO users (username, password) VALUES ('doctor', $1) ON CONFLICT (username) DO NOTHING`,
+      `INSERT INTO users (username, password) VALUES ('Dr.Mohsin.alcods', $1) ON CONFLICT (username) DO NOTHING`,
+      [mohsinHash]
+    );
+
+    const doctorHash = await bcrypt.hash('!q#3Xv9$LmZ2&p@L', 10);
+    await client.query(
+      `INSERT INTO users (username, password) VALUES ('doctor.alcods', $1) ON CONFLICT (username) DO NOTHING`,
       [doctorHash]
     );
 
