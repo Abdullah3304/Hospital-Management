@@ -37,6 +37,11 @@ body {
   padding: 0 1rem;
 }
 
+.dashboard-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 /* ===== Buttons ===== */
 .btn {
   padding: 0.5rem 1.25rem;
@@ -1013,6 +1018,107 @@ textarea {
 
   .print-sheet-block {
     margin-bottom: 0.5rem;
+  }
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #546e7a;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-link:hover {
+  background: #f0f2f5;
+  color: #1976d2;
+}
+
+.nav-link.active {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.dashboard-page .page-header {
+  align-items: center;
+}
+
+.dashboard-total-badge {
+  font-size: 0.85rem;
+  color: #666;
+  background: #f0f2f5;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+}
+
+.card-panel {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.card-panel h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #333;
+}
+
+.dashboard-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.dashboard-filter-row .form-group {
+  margin-bottom: 0;
+  min-width: 180px;
+}
+
+.dashboard-clear-btn {
+  margin-bottom: 0.15rem;
+}
+
+.dashboard-pdf-btn {
+  margin-bottom: 0.15rem;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header-nav {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 
