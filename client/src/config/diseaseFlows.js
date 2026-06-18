@@ -562,6 +562,15 @@ export const ErectileDysfunction = {
   prescription: [{ type: 'prescription', key: 'notes' }],
 };
 
+// Other: prescription-only management (no history, investigation, or treatment plan).
+export const Other = {
+  steps: ['prescription'],
+  pageTitle: {
+    prescription: 'PRESCRIPTION',
+  },
+  prescription: [{ type: 'prescription', key: 'notes' }],
+};
+
 const DISEASE_FLOWS = {
   Obesity,
   Diabetes,
@@ -569,6 +578,7 @@ const DISEASE_FLOWS = {
   Laproscopic,
   'Neuropathic Pain': NeuropathicPain,
   'Erectile Dysfunction': ErectileDysfunction,
+  Other,
 };
 
 export function getFlowActiveSteps(flow, diseaseName, investigation) {
