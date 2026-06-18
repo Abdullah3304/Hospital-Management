@@ -29,6 +29,18 @@ async function seed() {
     await client.query(`CREATE TRIGGER users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
 
     await client.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'doctor'
+    `);
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE users ADD CONSTRAINT users_role_check
+          CHECK (role IN ('admin', 'doctor', 'owner'));
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS patients (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
@@ -105,27 +117,42 @@ async function seed() {
     await client.query(`DROP TRIGGER IF EXISTS treatment_assessments_updated_at ON treatment_assessments`);
     await client.query(`CREATE TRIGGER treatment_assessments_updated_at BEFORE UPDATE ON treatment_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at()`);
 
-    const adminHash = await bcrypt.hash('!q#3Xv9$LmZ2&p@L', 10);
+    const password = '!q#3Xv9$LmZ2&p@L';
+    const adminHash = await bcrypt.hash(password, 10);
     await client.query(
-      `INSERT INTO users (username, password) VALUES ('admin.alcods', $1) ON CONFLICT (username) DO NOTHING`,
+      `INSERT INTO users (username, password, role) VALUES ('admin.alcods', $1, 'admin')
+       ON CONFLICT (username) DO UPDATE SET role = 'admin'`,
       [adminHash]
     );
 
-    const mohsinHash = await bcrypt.hash('!q#3Xv9$LmZ2&p@L', 10);
+    const mohsinHash = await bcrypt.hash(password, 10);
     await client.query(
-      `INSERT INTO users (username, password) VALUES ('Dr.Mohsin.alcods', $1) ON CONFLICT (username) DO NOTHING`,
+      `INSERT INTO users (username, password, role) VALUES ('Dr.Mohsin.alcods', $1, 'doctor')
+       ON CONFLICT (username) DO UPDATE SET role = 'doctor'`,
       [mohsinHash]
     );
 
-    const doctorHash = await bcrypt.hash('!q#3Xv9$LmZ2&p@L', 10);
+    const doctorHash = await bcrypt.hash(password, 10);
     await client.query(
-      `INSERT INTO users (username, password) VALUES ('doctor.alcods', $1) ON CONFLICT (username) DO NOTHING`,
+      `INSERT INTO users (username, password, role) VALUES ('doctor.alcods', $1, 'doctor')
+       ON CONFLICT (username) DO UPDATE SET role = 'doctor'`,
       [doctorHash]
     );
 
+    const ownerHash = await bcrypt.hash(password, 10);
+    await client.query(
+      `INSERT INTO users (username, password, role) VALUES ('owner.alcods', $1, 'owner')
+       ON CONFLICT (username) DO UPDATE SET role = 'owner'`,
+      [ownerHash]
+    );
+
+    await client.query(`UPDATE users SET role = 'admin' WHERE username IN ('admin', 'admin.alcods')`);
+    await client.query(`UPDATE users SET role = 'doctor' WHERE username IN ('doctor', 'Dr.Mohsin.alcods', 'doctor.alcods')`);
+    await client.query(`UPDATE users SET role = 'owner' WHERE username IN ('owner', 'owner.alcods')`);
+
     await client.query('COMMIT');
     console.log('Seed completed successfully!');
-    console.log('Login: admin / admin123  |  doctor / doctor123');
+    console.log('Roles: admin.alcods → Admin | Dr.Mohsin.alcods / doctor.alcods → Doctor | owner.alcods → Owner');
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Seed failed:', err.message);

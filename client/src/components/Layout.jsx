@@ -1,8 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const ROLE_LABELS = {
+  admin: 'Admin',
+  doctor: 'Doctor',
+  owner: 'Owner',
+};
+
 export default function Layout({ children }) {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -16,7 +22,12 @@ export default function Layout({ children }) {
         <Link to="/patients">
           <img src="/logo.png" alt="ALCODS" className="header-logo" />
         </Link>
-        <button onClick={handleLogout} className="btn btn-danger">Logout</button>
+        <div className="header-actions">
+          {user?.role && (
+            <span className="role-badge">{ROLE_LABELS[user.role] || user.role}</span>
+          )}
+          <button onClick={handleLogout} className="btn btn-danger">Logout</button>
+        </div>
       </header>
       <main className="main-content">{children}</main>
     </div>

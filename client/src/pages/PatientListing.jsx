@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
+import { canManagePatients } from '../utils/permissions';
 
 export default function PatientListing() {
   const [patients, setPatients] = useState([]);
@@ -8,16 +10,27 @@ export default function PatientListing() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canEdit = canManagePatients(user?.role);
+
+  const fetchPatients = () => {
+    api.get('/patients', { params: { page, search } }).then(({ data }) => {
+      setPatients(data.patients);
+      setTotalPages(data.totalPages);
+    });
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      api.get('/patients', { params: { page, search } }).then(({ data }) => {
-        setPatients(data.patients);
-        setTotalPages(data.totalPages);
-      });
-    }, 300);
+    const timer = setTimeout(fetchPatients, 300);
     return () => clearTimeout(timer);
   }, [page, search]);
+
+  const handleDelete = async (e, patientId) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this patient?')) return;
+    await api.delete(`/patients/${patientId}`);
+    fetchPatients();
+  };
 
   return (
     <div>
@@ -31,9 +44,11 @@ export default function PatientListing() {
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             className="search-input"
           />
-          <button onClick={() => navigate('/patients/new')} className="btn btn-primary">
-            Add Patient
-          </button>
+          {canEdit && (
+            <button onClick={() => navigate('/patients/new')} className="btn btn-primary">
+              Add Patient
+            </button>
+          )}
         </div>
       </div>
 
@@ -50,18 +65,32 @@ export default function PatientListing() {
           </thead>
           <tbody>
             {patients.map(p => (
-              <tr key={p.id} onClick={() => navigate(`/patients/${p.id}/edit`)} className="clickable">
+              <tr
+                key={p.id}
+                onClick={canEdit ? () => navigate(`/patients/${p.id}/edit`) : undefined}
+                className={canEdit ? 'clickable' : undefined}
+              >
                 <td>{p.name}</td>
                 <td>{p.age}</td>
                 <td>{p.gender}</td>
                 <td>{p.mobile_number}</td>
                 <td>
-                  <button
-                    onClick={e => { e.stopPropagation(); navigate(`/patients/${p.id}/diseases`); }}
-                    className="btn btn-primary btn-sm"
-                  >
-                    Treatment Status
-                  </button>
+                  <div className="action-buttons">
+                    <button
+                      onClick={e => { e.stopPropagation(); navigate(`/patients/${p.id}/diseases`); }}
+                      className="btn btn-primary btn-sm"
+                    >
+                      Treatment Status
+                    </button>
+                    {canEdit && (
+                      <button
+                        onClick={e => handleDelete(e, p.id)}
+                        className="btn btn-danger btn-sm"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
