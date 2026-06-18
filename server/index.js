@@ -16,6 +16,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/patients', require('./routes/patients'));
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
