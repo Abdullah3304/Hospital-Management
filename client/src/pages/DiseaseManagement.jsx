@@ -207,13 +207,15 @@ export default function DiseaseManagement() {
           </button>
         </div>
 
-        <div className="step-indicator">
-          {activeSteps.map((s, i) => (
-            <div key={s} className={`step-dot ${i === step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
-              <span>{i + 1}</span>
-            </div>
-          ))}
-        </div>
+        {activeSteps.length > 1 && (
+          <div className="step-indicator">
+            {activeSteps.map((s, i) => (
+              <div key={s} className={`step-dot ${i === step ? 'active' : ''} ${i < step ? 'done' : ''}`}>
+                <span>{i + 1}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <h1 className="management-title">
           {title.split('\n').map((line, i) => <div key={i}>{line}</div>)}

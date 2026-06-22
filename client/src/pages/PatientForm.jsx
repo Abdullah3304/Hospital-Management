@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { isDiseaseAvailableForGender } from '../config/diseaseFlows';
 
-const DISEASES = ['Diabetes', 'Diabetic Foot', 'Laproscopic', 'Obesity', 'Neuropathic Pain', 'Stem Cell Therapy', 'Erectile Dysfunction'];
+const DISEASES = ['Diabetes', 'Diabetic Foot', 'Laproscopic', 'Obesity', 'Neuropathic Pain', 'Stem Cell Therapy', 'Erectile Dysfunction', 'Other'];
 
 export default function PatientForm({ addDisease }) {
   const { id } = useParams();
