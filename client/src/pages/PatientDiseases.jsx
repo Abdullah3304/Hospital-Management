@@ -1,8 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
 import { shouldShowBasicChecklistPregnancy } from '../config/diseaseFlows';
 import { validateDiabetesChecklist } from '../utils/diabetesValidation';
+import { canEditChecklist, canViewChecklist, canViewManagement } from '../utils/permissions';
 
 const EMPTY_CHECKLIST = {
   blood_pressure: '',
@@ -46,6 +48,10 @@ function feetInchesToMeters(ft, inches) {
 export default function PatientDiseases() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canEditChecklistForm = canEditChecklist(user?.role);
+  const showChecklist = canViewChecklist(user?.role);
+  const showManagement = canViewManagement(user?.role);
   const [diseases, setDiseases] = useState([]);
   const [selected, setSelected] = useState(null);
   const [checklist, setChecklist] = useState(EMPTY_CHECKLIST);
@@ -181,18 +187,22 @@ export default function PatientDiseases() {
                 <td>{new Date(d.created_at).toLocaleDateString()}</td>
                 <td>
                   <div className="action-buttons">
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => openChecklist(d)}
-                    >
-                      Basic Checklist
-                    </button>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => navigate(`/patients/${id}/diseases/${d.id}/management`)}
-                    >
-                      {d.assessment_submitted ? 'View / Edit Management' : 'Start Management'}
-                    </button>
+                    {showChecklist && (
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => openChecklist(d)}
+                      >
+                        Basic Checklist
+                      </button>
+                    )}
+                    {showManagement && (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => navigate(`/patients/${id}/diseases/${d.id}/management`)}
+                      >
+                        {d.assessment_submitted ? 'View / Edit Management' : 'Start Management'}
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -208,11 +218,15 @@ export default function PatientDiseases() {
         <div className="modal-overlay" onClick={closeChecklist}>
           <div className="modal modal-checklist" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Basic Checklist &mdash; {selected.disease}</h3>
+              <h3>
+                Basic Checklist &mdash; {selected.disease}
+                {!canEditChecklistForm && <span className="view-only-label"> (View Only)</span>}
+              </h3>
               <button onClick={closeChecklist} className="modal-close">&times;</button>
             </div>
             <div className="modal-body">
               {checklistError && <div className="error-msg">{checklistError}</div>}
+              <fieldset disabled={!canEditChecklistForm} className="checklist-fieldset">
               <div className="form-group">
                 <label>Blood Pressure</label>
                 <input
@@ -431,9 +445,14 @@ export default function PatientDiseases() {
                   placeholder="Enter notes..."
                 />
               </div>
+              </fieldset>
             </div>
             <div className="modal-footer">
-              <button onClick={saveChecklist} className="btn btn-primary">Save</button>
+              {canEditChecklistForm ? (
+                <button onClick={saveChecklist} className="btn btn-primary">Save</button>
+              ) : (
+                <button onClick={closeChecklist} className="btn btn-secondary">Close</button>
+              )}
             </div>
           </div>
         </div>

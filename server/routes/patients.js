@@ -1,10 +1,11 @@
 const router = require('express').Router();
 const pool = require('../db');
 const { authMiddleware } = require('../auth');
+const { requirePermission } = require('../permissions');
 
 router.use(authMiddleware);
 
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('patient', 'view'), async (req, res) => {
   const { page = 1, search = '' } = req.query;
   const limit = 25;
   const offset = (page - 1) * limit;
@@ -32,7 +33,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', requirePermission('patient', 'view'), async (req, res) => {
   try {
     const patient = await pool.query('SELECT * FROM patients WHERE id = $1', [req.params.id]);
     if (!patient.rows.length) return res.status(404).json({ error: 'Patient not found' });
@@ -57,7 +58,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requirePermission('patient', 'create'), async (req, res) => {
   const { name, age, gender, mobile_number, disease, fees } = req.body;
   const client = await pool.connect();
 
@@ -87,7 +88,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requirePermission('patient', 'update'), async (req, res) => {
   const { name, age, gender, mobile_number, disease, fees, diseaseId } = req.body;
   const client = await pool.connect();
 
@@ -125,7 +126,17 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.get('/:id/diseases', async (req, res) => {
+router.delete('/:id', requirePermission('patient', 'delete'), async (req, res) => {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM patients WHERE id = $1', [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Patient not found' });
+    res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/:id/diseases', requirePermission('patient', 'view'), async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT pd.*, COALESCE(ta.submitted, FALSE) AS assessment_submitted
@@ -140,7 +151,7 @@ router.get('/:id/diseases', async (req, res) => {
   }
 });
 
-router.post('/:id/diseases', async (req, res) => {
+router.post('/:id/diseases', requirePermission('patient', 'create'), async (req, res) => {
   const { disease, fees } = req.body;
   try {
     const { rows } = await pool.query(
@@ -154,7 +165,7 @@ router.post('/:id/diseases', async (req, res) => {
   }
 });
 
-router.get('/diseases/:diseaseId/checklist', async (req, res) => {
+router.get('/diseases/:diseaseId/checklist', requirePermission('checklist', 'view'), async (req, res) => {
   try {
     const { rows } = await pool.query(
       'SELECT * FROM disease_checklists WHERE patient_disease_id = $1',
@@ -166,7 +177,7 @@ router.get('/diseases/:diseaseId/checklist', async (req, res) => {
   }
 });
 
-router.put('/diseases/:diseaseId/checklist', async (req, res) => {
+router.put('/diseases/:diseaseId/checklist', requirePermission('checklist', 'edit'), async (req, res) => {
   const {
     blood_pressure = '',
     pulse = '',
@@ -230,7 +241,7 @@ router.put('/diseases/:diseaseId/checklist', async (req, res) => {
 // Disease management assessment (multi-step wizard). Stores history,
 // pre-operative investigation, and treatment plan as JSONB, so each
 // disease can define its own sections/options on the frontend.
-router.get('/diseases/:diseaseId/assessment', async (req, res) => {
+router.get('/diseases/:diseaseId/assessment', requirePermission('management', 'view'), async (req, res) => {
   try {
     const { rows } = await pool.query(
       'SELECT * FROM treatment_assessments WHERE patient_disease_id = $1',
@@ -242,7 +253,7 @@ router.get('/diseases/:diseaseId/assessment', async (req, res) => {
   }
 });
 
-router.put('/diseases/:diseaseId/assessment', async (req, res) => {
+router.put('/diseases/:diseaseId/assessment', requirePermission('management', 'edit'), async (req, res) => {
   const { history = {}, investigation = {}, treatment_plan = {}, prescription = {} } = req.body;
   try {
     const { rows } = await pool.query(`

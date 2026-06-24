@@ -15,7 +15,7 @@ export default function Login() {
     setError('');
     try {
       const { data } = await api.post('/auth/login', { username, password });
-      login(data.token);
+      login(data.token, data.user);
       navigate('/patients');
     } catch {
       setError('Invalid username or password');
